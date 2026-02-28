@@ -1,0 +1,25 @@
+.vscode/
+build/
+ExGraphics/
+Graphics/
+patches/
+releases/
+src/.vs
+sysLMRestore/
+uberasm/
+*.map16
+*.pal
+*.palmask
+*.bin
+*.smc
+*.srm
+*.sfc
+*.exe
+*.res
+*.ifc
+*.obj
+*.pdb
+*.bst
+*.bat
+list.txt
+known issues.txt

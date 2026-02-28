@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Objectool Guide</title>
+<link rel="icon" type="image/x-icon" href="data:image/gif;base64,R0lGODdhEAAQAKIAAAAAAAMDA4hYGNigOPj4AOjw+AAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQJCgAAACwAAAAAEAAQAAADWAiq0r4QNFJqIS0KOkbrl7AEBNFtWFcGCnkK1TcQLOnMlenQJLn+v4DLR1zNhDpfaSU4ugbKZUCF9CxVpSYN0MsKUb0WVNjpCKcs8WxZMkfIZXM6wj0LIwkAOw==">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {font-family: consolas;}
+
+/* Style the tab */
+.tab {
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
+}
+
+/* Style the buttons inside the tab */
+.tab button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+  font-size: 17px;
+}
+
+/* Change background color of buttons on hover */
+.tab button:hover {
+  background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+.tab button.active {
+  background-color: #ccc;
+}
+
+/* Style the tab content */
+.tabcontent {
+  display: none;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-top: none;
+}
+
+.code {
+  width: 40%;
+  border: 1px solid black;
+  padding: 4px;
+  padding-left: 16px;
+  margin-left:12px;
+  margin-top:10px;
+  margin-bottom:10px;
+}
+
+table, th, td {
+  text-align: center;
+  border: 1px solid black;
+  border-radius: 10px;
+  padding: 4px;
+  padding-left: 6px;
+  padding-right: 6px;
+  margin-top:10px;
+  margin-bottom:10px;
+}
+
+th, td {
+	border-color: #808080;
+}
+</style>
+</head>
+<body>
+
+<pre style="text-align: left;font-size: 12px">;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+; ObjecTool v. 1.0, by imamelia & Burning Loaf                                  ;
+;                                                                               ;
+; This tool allows you to insert custom extended objects, which will go in as   ;
+; extended objects 98-FF), and custom normal objects, which are all variants    ;
+; of normal object 2D (which is unused in the original game but, in Lunar Magic ;
+; 1.8 onward, is usable for custom objects and has been expanded to 5 bytes).   ;
+;                                                                               ;
+; Credit to 1024 (aka 0x400) for the original ObjecTool.                        ;
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;</pre>
+
+<div class="tab">
+  <button class="tablinks" onclick="selectTab(event, 'A')">How to Use</button>
+  <button class="tablinks" onclick="selectTab(event, 'B')">Custom Object Creation</button>
+  <button class="tablinks" onclick="selectTab(event, 'C')">Included Files</button>
+  <button class="tablinks" onclick="selectTab(event, 'D')">Additional Information</button>
+</div>
+
+<div id="A" class="tabcontent">
+  <pre>
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+; How To Use                                                              ;
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+  
+  To use this tool, place the objects you'd like to insert in the Objects folder,
+  then edit the list.txt file to specify which object file to insert.
+  
+  To insert the specified objects into a ROM file, you can either execute
+  the program and type in the ROM's filename, or you can drag and drop the ROM
+  into objectool.exe.
+  
+  Command line input:
+  objectool.exe {ROM name} [list file] [objects folder] [routines folder] 
+  
+  The format for object entries in list.txt is:
+  
+  0A 0001 examples/slopes.asm
+  |  |    |
+  |  |    | Object file
+  |  |
+  |  | 16-bit object parameter word (check 'Additional Information')
+  |
+  | 8-bit object number in hexadecimal
+  
+  For any extended objects, they should be positioned below the line
+  containing "EXTENDED:", it's the line that specifies all following objects
+  are extended.
+  
+  They're pretty much in the same format, except that extended objects'
+  numbers can only be 98 to FF.
+  
+  Any line beginning with ; is a comment and will be ignored by the program.
+  
+  Custom objects also usually come with .map16 files; those do not concern ObjecTool.
+  They are to be inserted using Lunar Magic's map16 editor.
+  
+  The included 'Objectool example.map16' file is for use with the objects
+  that came with Objectool, once inserted with the map16 editor, the included
+  objects' appearance will be correct.
+  
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+; Placing objects                                                         ;
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+
+  To place custom objects in Lunar Magic, you must use the "Add Object Manual" menu
+  which can be accessed by pressing the Insert key while in the main level editor.
+  (or place one of the original objects and change its settings by Alt+Right Click),
+  
+  Objects in SMW are divided into two types: normal and extended.
+  
+  Normal objects are things like coins, ledges, and pipes that can be resized, i.e., they have an X and/or Y dimension.
+  Extended objects are things like doors, Yoshi coins, and powerup blocks that cannot be resized and only have one possible arrangement of blocks.  
+
+  Normal objects in SMW can have numbers ranging from 00 to 3F;
+  objects 00-21 and 2E-3F are used by the original game, and 22-2D are used by Lunar Magic for various purposes.
+  
+  For custom normal objects, this is what the insertion screen for one would look like:
+  
+  <img src=" data:image/gif;base64,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"/>
+  <span style="color: #FF0000; font-weight: bold">
+  "Command"          = Always 2D.
+  "Size/Type/Ext"    = Size or settings byte, which can also be edited by resizing the placed object.
+  "Extension" byte 1 = Custom object number.
+  "Extension" byte 2 = Extra settings byte. (or extra byte for short)
+  </span>
+  All custom objects are considered object 2D;
+  the "Extension" field is where you place the custom object number,
+  in addition to one optional extra byte that can be used as an additional parameter or subtype.  
+  Custom normal objects can have numbers from 00-FF.
+  
+  For custom extended objects, this is what the insertion screen for one would look like:
+
+  <img src=" data:image/gif;base64,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"/>
+  <span style="color: #FF0000; font-weight: bold">
+  "Command"          = Always 0.
+  "Size/Type/Ext"    = Custom extended object number. Anything between 98-FF.
+  </span>
+  Extended objects in SMW always count as normal object 00,
+  and the byte that would normally specify the size, the "Size/Type/Ext" field, instead specifies the extended object number.
+  Extended objects 00, 01, and 10-97 are used by the original game, while 02 and 03 are used by Lunar Magic,
+  and 04-0F and 98-FF are available for custom use (but this patch no longer supports extended objects 04-0F just in case future versions of Lunar Magic use any of those).
+  
+  Object files contain descriptions about which object byte affects what,
+  so make sure to read those in case you don't know what values to input.
+  
+  As of this writing (June 2024), Lunar Magic does not support displaying custom objects correctly, so they will appear as a group of glitchy tiles in the editor.
+  
+  (Some extended objects may also display tiles that would normally send you to a screen exit, so they may trigger Lunar Magic's warning
+  about unassigned screen exits, even though the object code itself may not have anything to do with them.)
+
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+; What are objects even good for?                                         ;
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+
+  A major advantage objects have over map16 tiles (which are technically
+  objects as well) in the level though, is item memory.
+  Item memory is a block of RAM in SMW that keeps track of which tiles have
+  been activated or have disappeared, so when you re-enter the level through
+  a pipe or door, the object would load differently from last time.
+  Vanilla objects such as coins, yoshi coins and question blocks do this.
+  
+  An object can also consider other factors to load differently, rather than
+  just item memory, for example if mario enters the level with a yoshi,
+  an object could detect that and load with solid blocks instead of intangible
+  ones, or maybe it could be a random power-up question block each time
+  you load the level, or it can be an extra switch palace block that doesn't
+  need ExAnimation to update its visuals, but instead just map16 tiles,
+  not even a custom block!
+  
+  And if you're a programmer, you can use objects to enable level specific flags
+  just from the editor, for example if you want to disable the HUD for this level
+  a custom object with code that sets up the flag depending on the extra byte
+  would be good for that, and it's more reliable than a sprite since object code
+  always and only runs on level load, and not when the object is onscreen.
+  
+  It's also worth mentioning that creating a level using mostly objects rather
+  than map16 tiles would leave you with a lot of data saved, but with the average
+  SMW ROM sizes that hardly matters, level data doesn't take nearly as much space
+  as music or graphics.
+
+  So generally there's little reason to use them, but if you get creative you
+  can find ways to make objects a valuable resource.
+  </pre>
+</div>
+
+<div id="B" class="tabcontent">
+	<pre>
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+; Basic custom object creation                                            ;
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+
+  Creating your own custom objects can mean one of two things;
+  Basic and advanced custom object creation, the former being
+  that all you do is modify an object's table so that it uses
+  different map16 tiles but with the same layout.
+  
+  With the object files included with objectool you can do just that.
+  All you have to do is add your own tables that follow the same format
+  as the custom object's included one(s).
+  
+  For example, for object1x1.asm, it's a single tile, all you have to do
+  is in the line where 'dw $0233' is, add another line below it that's
+  'dw $002B', now if you insert that object with a parameter byte
+  value of 1, it should be a coin instead of a solid block.
+  
+  For other objects, the table can be several tiles long, so it's the
+  same process, but remember that each table should be the same length as
+  the others in the same file, otherwise there may be unintended tiles in
+  the resulting placed object.
+  
+  You may notice there's labels such as 'CustObjTiles:', usually only the first
+  label in a bunch of tables is needed, but you can add more or just a comment
+  line in case you forget what's what.
+  
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+; Advanced custom object creation                                         ;
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+
+  This section assumes that the reader has basic ASM knowledge. It is for
+  creating a custom object from scratch.
+  
+  For custom object files, the code's start is at the load: label, and it
+  ends with an RTS.
+  
+  Now, how do you make an object place a tile in its position in the level?<pre class="code">
+load:
+	LDY $57
+	LDA #$00
+	STA [$6B],y
+	LDA #$01
+	STA [$6E],y
+RTS</pre>  That's pretty much it. This is code for an object that places map16 tile $0100 in its position.
+  You can try inserting it either as an extended or normal object, and if done correctly
+  it should work as intended, by placing a ledge tile.
+  
+  In case it's not apparent, [$6B] and [$6E] each are 3-byte long pointers to
+  where the map16 data for the object would be written, and they should be indexed
+  with Y containing the value of $57.
+  [$6B] is the low map16 byte data pointer, and [$6E] is the high byte's.
+  So you just index those with Y and write to them.
+  
+  Now, what if we want to place TWO ledge tiles next to each other?
+  Then we'd have to call one of the shift routines, like so:<pre class="code">
+load:
+	LDY $57
+	LDA #$00
+	STA [$6B],y
+	LDA #$01
+	STA [$6E],y
+	%ShiftObjRight()
+	LDA #$00
+	STA [$6B],y
+	LDA #$01
+	STA [$6E],y
+RTS</pre>  And there we go, that's code for a 2-tile wide ledge.
+  Same deal as before, insert and it should work.
+  
+  While we're at it, there's defines for common addresses you'd need for
+  object code, so if you forget what $57 is, you can replace it with
+  !obj_pos, and for convenience sake you can replace [$6B] with !map16_low
+  and [$6E] with !map16_high. A full reference can be found in the Additional Information section.
+  
+  Now what if we want a ledge whose width depends on the size byte of the object?
+  Then we'd need a loop, like so:<pre class="code">
+load:
+	LDY $57
+<span style="color: #808080">	; StoreNybbles gets the position and size
+	; of an object and stores them to scratch RAM.
+	; $08 contains the width.</span>
+	%StoreNybbles()
+	LDX $08
+	.loop
+	LDA #$00
+	STA [$6B],y
+	LDA #$01
+	STA [$6E],y
+	%ShiftObjRight()
+	DEX
+	BPL .loop
+RTS</pre>  Not so hard right? X takes the value of $08 which for a normal
+  object is the settings byte's low 4 bits (the width of the object), and
+  X decreases each iteration until it reaches $FF, which is below 0.
+  
+  Since BPL (branch if positive) is right after a DEX, the N flag (negative value)
+  is kept from DEX, which sets that flag once X is below 0.
+  
+  So the sequence is: ledge tile is written, shift right, check if X negative, decrease X
+  and if X still positive then branch to .loop.
+  This happens until X (initially containing the width) is negative.
+
+  Let's take it a step further by adding height:<pre class="code">
+load:
+	LDY $57
+	%StoreNybbles()
+	LDA $09
+	STA $00
+	.loopV
+	LDX $08
+	.loopH
+	LDA #$00
+	STA [$6B],y
+	LDA #$01
+	STA [$6E],y
+	%ShiftObjRight()
+	DEX
+	BPL .loopH
+	%ShiftObjDown()
+	DEC $00
+	BPL .loopV
+RTS</pre>  Now we have an object that places tiles both vertically and horizontally.
+
+  What we did here is basically a loop inside of a loop.
+  For each iteration of the vertical loop, an entire row of tiles gets written.
+  Since Y is busy being the map16 pointer index and X is busy being the horizontal
+  loop's counter, we can use scratch RAM $00 instead.
+
+  So $00 holds the height, X holds the width, and each iteration goes:
+  Give X the width, then write an entire row of tiles, and once that's done
+  shift down one tile (the routine resets the X position, so we're back to the
+  object's horizontal origin), decrease $00 and check if it's negative, otherwise
+  go through the same process again.
+  
+  Okay, that's great and all, but it's just one tile!
+  So let's make the next step change the tiles depending on the current position:<pre class="code">
+table:
+	dw $0100,$003F
+
+load:
+	LDY $57
+	%StoreNybbles()
+	LDA $09
+	STA $01
+	LDX #$00
+	.loopV
+	LDA $08
+	STA $00
+	.loopH
+	LDA table,x
+	STA [$6B],y
+	LDA table+1,x
+	STA [$6E],y
+	%ShiftObjRight()
+	DEC $00
+	BPL .loopH
+	%ShiftObjDown()
+	CPX #$00
+	BNE +
+	INX #2
++	DEC $01
+	BPL .loopV
+RTS</pre>  Here's what was changed: X no longer holds the width because we need
+  it for indexing the table, so $00 = width, $01 = height, X = tile index.
+  
+  It's basically the same thing as before, except this time after the first row is
+  written X increases if it equals #$00, which is what we set it initially as.
+  So every row after the first, it places a dirt tile.
+  
+  And that's pretty much it! We have a resizeable custom ledge object.
+  Of course, there's more to objects than just this, and it can get pretty
+  intense if you're coding something like slopes, but it just boils down to place,
+  shift, place, shift.
+  
+  You can check the included objects if you want something to base your code on.
+
+	</pre>
+</div>
+
+<div id="C" class="tabcontent">
+	<pre>
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+; Included Objects                                                        ;
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+
+- "cluster.asm", which creates a group of Map16 tiles with a specified set of dimensions.
+  To be inserted as either a normal or extended object.
+  <span style="color: #FF00FF">As a custom object: The object's extra byte determines which table it should use.
+  As an extended object: The object's parameter word determines which table it should use.
+  </span>
+- "Objects1x1.asm", which creates a single Map16 tile.
+  To be inserted as an extended object.
+  <span style="color: #FF00FF">The object's parameter word determines which table to use.
+  </span>
+- "Objects2x1.asm", which creates 2 tiles in a 2x1 arrangement.
+  To be inserted as an extended object.
+  <span style="color: #FF00FF">The object's parameter word determines which table to use.
+  </span>
+- "Objects1x2.asm", which creates 2 tiles in a 1x2 arrangement.
+  To be inserted as an extended object.
+  <span style="color: #FF00FF">The object's parameter word determines which table to use.
+  </span>
+- "Objects2x2.asm", which creates 4 Map16 tiles in a 2x2 arrangement.
+  To be inserted as an extended object.
+  <span style="color: #FF00FF">The object's parameter word determines which table to use.
+  </span>
+- "square.asm" and its variant "squareBig.asm", which create an array of tiles that can be stretched along both axes according to the size in Lunar Magic.
+  The "big" variation also uses the extra byte for 8 additional size bits (yyyyxxxx) to allow making the object larger
+  (note, however, that Lunar Magic will not take the extra size bits into account when displaying the object in the editor).
+  To be inserted as a normal object.
+  <span style="color: #FF00FF">SquareObjects: The object's extra byte determines which table to use.
+  BigSquareObjects: The object's parameter word determines which table to use.
+  </span>
+- "square2.asm" and its variant "squareBig2.asm", which are like the first square objects, but their tiles change when over top of a non-blank tile.
+  To be inserted as a normal object.
+  <span style="color: #FF00FF">square2: The object's extra byte determines which table to use.
+  squareBig2: The object's parameter word determines which table to use.
+  </span>
+- "horiz2End", which creates an array of tiles that can be stretched horizontally only.
+  To be inserted as a normal object.
+  <span style="color: #FF00FF">The object's extra byte determines which table to use.
+  </span>
+- "vert2End", which creates an array of tiles that can be stretched vertically only.
+  To be inserted as a normal object.
+  <span style="color: #FF00FF">The object's extra byte determines which table to use.
+  </span>
+- "unidimensional", which creates an array of tiles that can be stretched in only one direction and checks which direction that is.
+  To be inserted as a normal object.
+  <span style="color: #FF00FF">The object's extra byte determines which table to use.
+  </span>
+- "unidimensional2", which is like the first unidimensional object, but its tiles change when over top of a specific tile number.
+  To be inserted as a normal object.
+  <span style="color: #FF00FF">The object's extra byte determines which table to use.
+  </span>
+- "unidimensionalWide", which is like the first unidimensional object, except that the object is 2 tiles wide instead of 1.
+  To be inserted as a normal object.
+  <span style="color: #FF00FF">The object's extra byte determines which table to use.
+  </span>
+- "itemMemory1x1.asm", which creates an array of a single Map16 tile that can be stretched in both directions and can also be set to take item memory into account.
+  To be inserted as a normal object.
+  <span style="color: #FF00FF">The object's extra byte determines which table to use.
+  </span>
+- "ledge.asm", which creates an array of tiles that can be stretched in both directions, be set to have any combination of 4 edges,
+  and will change according to which tiles it is placed over.
+  To be inserted as a normal object.
+  <span style="color: #FF00FF">The object's parameter word and extra byte determine which table to use.
+  The object's extra byte determines the ledge part.
+  </span>
+- "slopes.asm", which can create a variety of slope types.
+  To be inserted as a normal object.
+  <span style="color: #FF00FF">The object's parameter word indicates the slope type.
+  The object's extra byte determines which table to use.
+  </span>
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+; Included Subroutines                                                    ;
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+
+  Note: Each object has a description of itself in the .asm file.
+
+- ShiftObjRight: This moves the current tile position 1 block to the right.
+  (You can't simply add 1 to $57 because then the object wouldn't work correctly when placed across screen boundaries.)
+
+- ShiftObjDown: This moves the current tile position 1 block down.
+  It also resets the X position to where it started out.
+
+- ShiftObjDownAlt: Same as ShiftObjDown, except that it doesn't reset the X position.
+
+- ShiftObjLeft: This moves the current tile position 1 block to the left.
+
+- ShiftObjUp: This moves the current tile position 1 block up.
+  It also resets the X position to where it started out.
+
+- ShiftObjUpAlt: Same as ShiftObjUp, except that it doesn't reset the X position.
+
+- ShiftObjRight2: This moves the current tile position a specified number of blocks to the right (input in A).
+
+- ShiftObjLeft2: This moves the current tile position a specified number of blocks to the left (input in A).
+
+- ObjectInitStd: This is a common initialization routine for objects.
+  It stores the object's X position to $06, Y position to $07, width to $08, and height to $09; copies the width to $00 and $02 and the height to $01; and then backs up the low byte of the Map16 pointers, copying $6B to $04 and $6E to $05.
+
+- BackUpPtrs: This backs up the Map16 pointers as described above.
+  (To be honest, this routine seems to have some odd usage in vanilla SMW...sometimes it just overwrites the backup RAM anyway?)
+
+- RestorePtrs: This restores the Map16 pointers from their backups, as well as the current screen number being processed.
+  Note that this does not work properly in conjunction with the alternative versions of the position-shifting routines.
+
+- StoreNybbles: This stores object variables to scratch RAM $06-$09 as described above.
+
+- GetItemMemoryBit: This checks whether an item memory flag is set for the current position.
+  It returns a value in A that will be 0 if that bit is not set and a nonzero value if it is.
+  Note that setting the item memory bit should be done in the code of the blocks that make up the object.
+
+  Also, there are several "custom" subroutine variants, which do basically the same thing as the regular ones but use a different system for indexing the Map16 tile tables.
+  These are used by the slope objects for easier manipulation of the current tile position.
+  These routines should NOT be used together with the standard ones, because their variables are used in different ways.
+  See the notes under the header for them in the ASM file.
+
+	</pre>
+</div>
+
+<div id="D" class="tabcontent">
+	<pre>
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+; Object-Related Addresses and defines                                    ;
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+  <table style="width:60%">
+  <tr>
+    <th style="width:10%">Address</th>
+    <th style="width:10%">Size</th>
+    <th>Alias</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>variable
+(freecode)</td>
+    <td>256</td>
+    <td style="color: #008000; font-weight: bold">parameterWords</td>
+    <td>Parameter word table for all custom normal objects.
+Each entry is 16-bit, so the index is (object number*2).
+If an object doesn't have one assigned, the value is $0000.
+A 24-bit pointer for this table's location can be found at read3(read3($0DA107)-6).</td>
+  </tr>
+  <tr>
+    <td>variable
+(freecode)</td>
+    <td>104</td>
+    <td style="color: #008000; font-weight: bold">parameterWordsEx</td>
+    <td>Parameter word table for all custom extended objects.
+Each entry is 16-bit, so the index is (object number*2).
+If an object doesn't have one assigned, the value is $0000.
+A 24-bit pointer for this table's location can be found at read3(read3($0DA107)-3).</td>
+  </tr>
+  <tr>
+    <td>-</td>
+    <td>1</td>
+    <td style="color: #0000C0; font-weight: bold">!objectool_check</td>
+    <td>Equals 1 if Objectool was already applied to the ROM, 0 otherwise.</td>
+  </tr>
+  <tr>
+    <td>-</td>
+    <td>2</td>
+    <td style="color: #0000C0; font-weight: bold">!objectool_version</td>
+    <td>Objectool version number.</td>
+  </tr>
+  <tr>
+    <td>-</td>
+    <td>2</td>
+    <td style="color: #0000C0; font-weight: bold">!objectool_version_ROM</td>
+    <td>The number of the version of objectool that was last applied to the ROM.
+This equals 0 if objectool was never applied to the ROM previously,
+and $0050 if ojectool 0.5 or below was applied previously.
+Otherwise, for version 1.0 it should be $0100.</td>
+  </tr>
+  <tr>
+    <td>$57</td>
+    <td>1</td>
+    <td style="color: #0000C0; font-weight: bold">!obj_pos</td>
+    <td>The position of an object within the current subscreen.
+Usually used to index [$6B] and [$6E].
+In object code, Y is normally equal to the value of this.</td>
+  </tr>
+  <tr>
+    <td>$58</td>
+    <td>1</td>
+    <td style="color: #0000C0; font-weight: bold">!extra_byte</td>
+    <td>Unused in the original SMW; In Objectool object code,
+it's used to hold the extra settings byte for normal objects
+(which can be used for subtype, extra size bits, etc.).</td>
+  </tr>
+  <tr>
+    <td>$59</td>
+    <td>1</td>
+    <td style="color: #0000C0; font-weight: bold">!obj_settings
+!extended_num</td>
+    <td>The settings byte for normal objects.
+In extended objects, it's considered the object number.</td>
+  </tr>
+  <tr>
+    <td>$5A</td>
+    <td>1</td>
+    <td style="color: #0000C0; font-weight: bold">!obj_num</td>
+    <td>The object number for normal objects.</td>
+  </tr>
+  <tr>
+    <td>[$6B]</td>
+    <td>3</td>
+    <td style="color: #0000C0; font-weight: bold">!map16_low</td>
+    <td>24-bit pointer to the low byte of the Map16 tile (in the table at $7EC800)
+at the position of the object that is currently being processed.
+It should be indexed by $57, i.e., [$6B],y, where Y = the contents of $57.</td>
+  </tr>
+    <td>[$6E]</td>
+    <td>3</td>
+    <td style="color: #0000C0; font-weight: bold">!map16_high</td>
+    <td>24-bit pointer to the high byte of the Map16 tile (in the table at $7FC800)
+at the position of the object that is currently being processed.
+It should be indexed by $57, i.e., [$6E],y, where Y = the contents of $57.</td>
+  </tr>
+    <td>$1928</td>
+    <td>1</td>
+    <td style="color: #0000C0; font-weight: bold">!obj_screen</td>
+    <td>Screen number on which the current object is placed.</td>
+  </tr>
+    <td>$1931</td>
+    <td>1</td>
+    <td style="color: #0000C0; font-weight: bold">!tileset</td>
+    <td>The current level's object tileset.</td>
+  </tr>
+    <td>$1BA1</td>
+    <td>1</td>
+    <td style="color: #0000C0; font-weight: bold">!tile_screen</td>
+    <td>Screen number on which the current tile is placed.
+Similar to $1928, but this may be changed within an object's code, while $1928 will not.</td>
+  </tr>
+  </table>
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+; Parameter Words                                                         ;
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+
+  Unlike normal custom objects, extended objects do not have a settings byte
+  or an extra byte, which is why an object is better off being extended if it
+  doesn't require either of those.
+  
+  However, what if multiple extended objects share mostly the same code, yet
+  they can be slightly different? For example just a different map16 tile or
+  table?
+  Wouldn't that be a waste of ROM space, to include multiple blocks of code
+  of objects that are almost identical?
+  Well, that's what parameter Words are for; Two or more objects can use the
+  same .asm file, but the code considers their assigned parameter Word in the
+  list file and adapts accordingly.
+  
+  Parameter Words are not exclusive to extended objects, are 16-bit long
+  for each entry, and are indexed by (object number*2).
+  
+  Parameter Words can be accessed via Objectool using the labels
+  "parameterWords" and "parameterWordsEx", but if they're needed in other
+  resources, a 24-bit pointer of parameterWords can be found in read3(read3($0DA107)-6)
+  and of parameterWordsEx in read3(read3($0DA107)-3)
+  
+  If you want to make sure Objectool 1.0 is inserted to check for the above values,
+  you can copy the !objectool_check and !objectool_version_ROM defines in defines.asm to
+  check if objectool was applied to the ROM.
+  
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+; Notes and Tips                                                          ;
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+  
+  By the time the program reaches the load: label...
+    
+    - A, X and Y are 8-bit.
+    - A contains the current object's number
+    
+    - The carry flag (C) is set if the object is an extended one, otherwise it's clear.
+    
+    - The data bank register (DB) is set to the current freecode block's bank byte.
+      Which means you can access labels in custom code with just word addresses
+      and by consequence you can index them with either Y or X.
+      Reminder that the parameter word tables are in the same bank as custom object
+      code, so if asar ever throws out an error saying something like
+      'unknown command LDA parameterWords,y', just change it to LDA.w parameterWords,y.
+    
+    - Scratch RAM $00-$01 are a 16-bit pointer to the current code's load: label.
+  
+  In an SA-1 ROM, code runs on the SA-1 coprocessor, so you can use SA-1
+  registers in the code but not SNES ones. You also can't access banks $7E-$7F,
+  and if you have to, you can use %invoke_snes(routine) to run certain code on
+  the SNES side. The called code should end with an RTL and does not have the
+  data bank register value set to the program bank's, so a PHB:PHK:PLB at the
+  start of the routine and PLB : RTL at the end of it should do if you ever
+  need to access tables.
+  
+  For custom routine files, the code's start is at the main: label, and it
+  ends with an RTL. Unlike other tools the labels aren't macro labels, just
+  regular ones.
+  To call a routine from the routines folder, you'd add %RoutineName()
+  (case sensitive). For information on what each of the included routines
+  does check the Included Files tab.
+  
+  A common method for coding objects, especially rectangular ones, is to iterate over the tiles that
+  compose it line by line by storing a tile number, shifting the position right, decrementing the tile
+  counter (usually $00), repeating this process until there are no more tiles to draw on the current line,
+  then shifting the position down and resetting the "tiles in current line" counter to maximum (usually
+  storing $08 to $00; $02 is sometimes used as a backup instead), and then repeating the whole process for
+  each successive line until all tiles in the object have been created.
+  
+  Sometimes along the way, it will be necessary to create different tiles depending on which part of the
+  object you're on (edge and corner tiles, for instance), and you'll need to check the counters.
+  Remember that, assuming you're decrementing the counters rather than incrementing them, if the counter is
+  equal to the number of tiles to draw (usually, this means $00 = $08 or $01 = $09), then you're at the top row
+  or leftmost column, and if the counter is equal to 0 (usually, this means $00 = #$00 or $01 = #$00), then
+  you're at the bottom row or rightmost column.
+  
+  You can also use bitwise operations to do things such as alternating middle tiles, or even alternating them
+  based on their position relative to the level rather than the object (which is useful for Super Mario Bros. 2
+  graphics, to name just one example).
+  
+  You can also use more than two dimension values for an object (such as the pulley wires from the original
+  Super Mario Bros., which have a width and two height values, one for the left wire and one for the right) or
+  even combine multiple subroutines to create an object with multiple variables (such as a tree where the trunk
+  and the leafy part can both be resized).
+
+  You can also replace the pointers for the original objects should you so desire, though that isn't included in this tool as a feature.
+  The extended objects have a table of 0x100 24-bit pointers starting at $0DA10F.
+  The normal objects have 5 different tables of 0x40 pointers for each of 5 different object sets (which is what the "T" value
+  in Lunar Magic's GFX bypass represents, the tileset-specific object set), which are at $0DA44B (object set 0, GFX sets 0/7/C),
+  $0DC190 (object set 1, GFX set 1), $0DCD90 (object set 2, GFX sets 2/6/8), $0DD990 (object set 3, GFX sets 3/9/A/B/E),
+  and $0DE890 (object set 4, GFX sets 4/5/D).
+  Note that even though the pointers are 24-bit, they expect a 16-bit return and don't change the data bank from 0D, so
+  unless you change the routines, any custom code used this way will require finishing with a JML to an RTS in bank 0D,
+  and they will use 0D as the data bank by default.
+    
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+; Porting Over 0.5 Objects                                                ;
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
+
+  Objects made for the previous version(s) of Objectool expected code to be pasted into
+  the appropriate object slots in the main patch's file, so a lot of errors will show
+  up if you insert a file as-is.
+  
+  All you need to do is look for all lines containing a [JSR routineName] to a routine
+  that exists in the included routines folder, and change it to %routineName() instead.
+  
+  if the file is a .txt, change it to an .asm file.
+
+	</pre>
+</div>
+
+<script>
+function selectTab(evt, text) {
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName("tabcontent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName("tablinks");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+  document.getElementById(text).style.display = "block";
+  evt.currentTarget.className += " active";
+}
+</script>
+   
+</body>
+</html> 
