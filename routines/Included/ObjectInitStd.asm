@@ -4,15 +4,15 @@
 ;------------------------------------------------
 
 main:
-	%StoreNybbles()
-	LDY $57
-	LDA $08
-	STA $00
-	STA $02
-	LDA $09
-	STA $01
-	LDA $6B
-	STA $04
-	LDA $6C
-	STA $05
-	RTL
+    %StoreNybbles()
+    LDY $57
+    LDA $08
+    STA $00
+    STA $02
+    LDA $09
+    STA $01
+    LDA $6B
+    STA $04
+    LDA $6C
+    STA $05
+    RTL

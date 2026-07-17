@@ -16,152 +16,152 @@
 ;------------------------------------------------
 
 SquareObjTiles:
-	dw $0200,$0201,$0202
-	dw $0210,$0211,$0212
-	dw $0220,$0221,$0222
-	
-	dw $0230,$0231,$0232
-	
-	dw $0203
-	dw $0213
-	dw $0223
-	
-	dw $0233
-	
+    dw $0200,$0201,$0202
+    dw $0210,$0211,$0212
+    dw $0220,$0221,$0222
+    
+    dw $0230,$0231,$0232
+    
+    dw $0203
+    dw $0213
+    dw $0223
+    
+    dw $0233
+    
 load:
-	LDA !extra_byte
-	REP #$20
-	AND.w #$00FF
-	ASL #4
-	STA $0C
-	SEP #$20
-	%StoreNybbles()
-	LDY !obj_pos
-	LDA $08
-	STA $00
-	LDA $09
-	STA $01
-	%BackUpPtrs()
-	LDA $09
-	BEQ .NoVert
-	LDA $08
-	BEQ .VertOnly
-	JMP .StartObjLoop
+    LDA !extra_byte
+    REP #$20
+    AND.w #$00FF
+    ASL #4
+    STA $0C
+    SEP #$20
+    %StoreNybbles()
+    LDY !obj_pos
+    LDA $08
+    STA $00
+    LDA $09
+    STA $01
+    %BackUpPtrs()
+    LDA $09
+    BEQ .NoVert
+    LDA $08
+    BEQ .VertOnly
+    JMP .StartObjLoop
 .VertOnly
-	REP #$30
-	LDA $0C
-	CLC
-	ADC #$000C
-	STA $0C
-	SEP #$20
+    REP #$30
+    LDA $0C
+    CLC
+    ADC #$000C
+    STA $0C
+    SEP #$20
 .LoopV
-	LDX $0C
-	LDA $01
-	CMP $09
-	BEQ .SetTileIndexV
-	INX
-	CMP #$00
-	BNE .SetTileIndexV
-	INX
+    LDX $0C
+    LDA $01
+    CMP $09
+    BEQ .SetTileIndexV
+    INX
+    CMP #$00
+    BNE .SetTileIndexV
+    INX
 .SetTileIndexV
-	REP #$20
-	TXA
-	ASL
-	TAX
-	LDA.w SquareObjTiles,x
-	SEP #$30
-	STA !map16_low,y
-	XBA
-	STA !map16_high,y
-	%ShiftObjDown()
-	DEC $01
-	BPL .LoopV
-	RTS
+    REP #$20
+    TXA
+    ASL
+    TAX
+    LDA.w SquareObjTiles,x
+    SEP #$30
+    STA !map16_low,y
+    XBA
+    STA !map16_high,y
+    %ShiftObjDown()
+    DEC $01
+    BPL .LoopV
+    RTS
 .NoVert
-	LDA $08
-	BEQ .SingleTile
+    LDA $08
+    BEQ .SingleTile
 .HorizOnly
-	REP #$30
-	LDA $0C
-	CLC
-	ADC #$0009
-	STA $0C
-	SEP #$20
+    REP #$30
+    LDA $0C
+    CLC
+    ADC #$0009
+    STA $0C
+    SEP #$20
 .LoopH
-	LDX $0C
-	LDA $00
-	CMP $08
-	BEQ .SetTileIndexH
-	INX
-	CMP #$00
-	BNE .SetTileIndexH
-	INX
+    LDX $0C
+    LDA $00
+    CMP $08
+    BEQ .SetTileIndexH
+    INX
+    CMP #$00
+    BNE .SetTileIndexH
+    INX
 .SetTileIndexH
-	REP #$20
-	TXA
-	ASL
-	TAX
-	LDA.w SquareObjTiles,x
-	SEP #$30
-	STA !map16_low,y
-	XBA
-	STA !map16_high,y
-	%ShiftObjRight()
-	DEC $00
-	BPL .LoopH
-	RTS
+    REP #$20
+    TXA
+    ASL
+    TAX
+    LDA.w SquareObjTiles,x
+    SEP #$30
+    STA !map16_low,y
+    XBA
+    STA !map16_high,y
+    %ShiftObjRight()
+    DEC $00
+    BPL .LoopH
+    RTS
 .SingleTile
-	REP #$30
-	LDA $0C
-	CLC
-	ADC #$000F
-	ASL
-	TAX
-	LDA.w SquareObjTiles,x
-	SEP #$30
-	STA !map16_low,y
-	XBA
-	STA !map16_high,y
-	RTS
+    REP #$30
+    LDA $0C
+    CLC
+    ADC #$000F
+    ASL
+    TAX
+    LDA.w SquareObjTiles,x
+    SEP #$30
+    STA !map16_low,y
+    XBA
+    STA !map16_high,y
+    RTS
 .StartObjLoop
-	REP #$10
-	LDX $0C
-	LDA $01
-	CMP $09
-	BEQ .NoInc1
-	INX #3
-	CMP #$00
-	BNE .NoInc1
-	INX #3
+    REP #$10
+    LDX $0C
+    LDA $01
+    CMP $09
+    BEQ .NoInc1
+    INX #3
+    CMP #$00
+    BNE .NoInc1
+    INX #3
 .NoInc1
-	LDA $00
-	CMP $08
-	BEQ .SetTileIndex
-	INX
-	CMP #$00
-	BNE .SetTileIndex
-	INX
+    LDA $00
+    CMP $08
+    BEQ .SetTileIndex
+    INX
+    CMP #$00
+    BNE .SetTileIndex
+    INX
 .SetTileIndex
-	REP #$20
-	TXA
-	ASL
-	TAX
-	LDA.w SquareObjTiles,x
-	SEP #$30
-	STA !map16_low,y
-	XBA
-	STA !map16_high,y
-	%ShiftObjRight()
+    REP #$20
+    TXA
+    ASL
+    TAX
+    LDA.w SquareObjTiles,x
+    SEP #$30
+    STA !map16_low,y
+    XBA
+    STA !map16_high,y
+    %ShiftObjRight()
 .DecAndLoop
-	DEC $00
-	BPL .StartObjLoop
-	%RestorePtrs()
-	%ShiftObjDown()
-	LDA $08
-	STA $00
-	DEC $01
-	BMI .EndObjLoop
-	JMP .StartObjLoop
+    DEC $00
+    BPL .StartObjLoop
+    %RestorePtrs()
+    %ShiftObjDown()
+    LDA $08
+    STA $00
+    DEC $01
+    BMI .EndObjLoop
+    JMP .StartObjLoop
 .EndObjLoop
 .Return
-	RTS
+    RTS

@@ -8,16 +8,16 @@
 ;------------------------------------------------
 
 main:
-	LDA $57
-	AND #$0F
-	STA $06
-	LDA $57
-	LSR #4
-	STA $07
-	LDA $59
-	AND #$0F
-	STA $08
-	LDA $59
-	LSR #4
-	STA $09
-	RTL
+    LDA $57
+    AND #$0F
+    STA $06
+    LDA $57
+    LSR #4
+    STA $07
+    LDA $59
+    AND #$0F
+    STA $08
+    LDA $59
+    LSR #4
+    STA $09
+    RTL

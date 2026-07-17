@@ -3,23 +3,23 @@
 ;------------------------------------------------
 
 main:
-	PHP
-	SEP #$20
-	LDA [$6E],y
-	XBA
-	LDA [$6B],y
+    PHP
+    SEP #$20
+    LDA [$6E],y
+    XBA
+    LDA [$6B],y
 FindMap16ActsLikeEntry1:
-	REP #$20
+    REP #$20
 .Loop
-	ASL
-	ADC $06F624|!bank
-	STA $0D
-	SEP #$20
-	LDA $06F626|!bank
-	STA $0F
-	REP #$20
-	LDA [$0D]
-	CMP #$0200
-	BCS .Loop
-	PLP
-	RTL
+    ASL
+    ADC $06F624|!bank
+    STA $0D
+    SEP #$20
+    LDA $06F626|!bank
+    STA $0F
+    REP #$20
+    LDA [$0D]
+    CMP #$0200
+    BCS .Loop
+    PLP
+    RTL

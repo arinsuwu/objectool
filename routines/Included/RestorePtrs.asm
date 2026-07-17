@@ -3,12 +3,12 @@
 ;------------------------------------------------
 
 main:
-	LDA $04
-	STA $6B
-	STA $6E
-	LDA $05
-	STA $6C
-	STA $6F
-	LDA $1928|!addr
-	STA $1BA1|!addr
-	RTL
+    LDA $04
+    STA $6B
+    STA $6E
+    LDA $05
+    STA $6C
+    STA $6F
+    LDA $1928|!addr
+    STA $1BA1|!addr
+    RTL

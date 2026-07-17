@@ -6,24 +6,24 @@
 ;------------------------------------------------
 
 Obj1x2Tiles:
-	dw $0203
-	dw $0223
-	
+    dw $0203
+    dw $0223
+    
 load:
-	ASL
-	TAX
-	LDA parameterWordsEx,x
-	ASL #2
-	TAX
-	LDY !obj_pos
-	LDA.w Obj1x2Tiles,x
-	STA !map16_low,y
-	LDA.w Obj1x2Tiles+1,x
-	STA !map16_high,y
-	INX #2
-	%ShiftObjDown()
-	LDA.w Obj1x2Tiles,x
-	STA !map16_low,y
-	LDA.w Obj1x2Tiles+1,x
-	STA !map16_high,y
-	RTS
+    ASL
+    TAX
+    LDA parameterWordsEx,x
+    ASL #2
+    TAX
+    LDY !obj_pos
+    LDA.w Obj1x2Tiles,x
+    STA !map16_low,y
+    LDA.w Obj1x2Tiles+1,x
+    STA !map16_high,y
+    INX #2
+    %ShiftObjDown()
+    LDA.w Obj1x2Tiles,x
+    STA !map16_low,y
+    LDA.w Obj1x2Tiles+1,x
+    STA !map16_high,y
+    RTS

@@ -67,7 +67,7 @@ table, th, td {
 }
 
 th, td {
-	border-color: #808080;
+    border-color: #808080;
 }
 </style>
 </head>
@@ -219,7 +219,7 @@ th, td {
 </div>
 
 <div id="B" class="tabcontent">
-	<pre>
+    <pre>
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
 ; Basic custom object creation                                            ;
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
@@ -259,11 +259,11 @@ th, td {
   
   Now, how do you make an object place a tile in its position in the level?<pre class="code">
 load:
-	LDY $57
-	LDA #$00
-	STA [$6B],y
-	LDA #$01
-	STA [$6E],y
+    LDY $57
+    LDA #$00
+    STA [$6B],y
+    LDA #$01
+    STA [$6E],y
 RTS</pre>  That's pretty much it. This is code for an object that places map16 tile $0100 in its position.
   You can try inserting it either as an extended or normal object, and if done correctly
   it should work as intended, by placing a ledge tile.
@@ -277,16 +277,16 @@ RTS</pre>  That's pretty much it. This is code for an object that places map16 t
   Now, what if we want to place TWO ledge tiles next to each other?
   Then we'd have to call one of the shift routines, like so:<pre class="code">
 load:
-	LDY $57
-	LDA #$00
-	STA [$6B],y
-	LDA #$01
-	STA [$6E],y
-	%ShiftObjRight()
-	LDA #$00
-	STA [$6B],y
-	LDA #$01
-	STA [$6E],y
+    LDY $57
+    LDA #$00
+    STA [$6B],y
+    LDA #$01
+    STA [$6E],y
+    %ShiftObjRight()
+    LDA #$00
+    STA [$6B],y
+    LDA #$01
+    STA [$6E],y
 RTS</pre>  And there we go, that's code for a 2-tile wide ledge.
   Same deal as before, insert and it should work.
   
@@ -298,20 +298,20 @@ RTS</pre>  And there we go, that's code for a 2-tile wide ledge.
   Now what if we want a ledge whose width depends on the size byte of the object?
   Then we'd need a loop, like so:<pre class="code">
 load:
-	LDY $57
-<span style="color: #808080">	; StoreNybbles gets the position and size
-	; of an object and stores them to scratch RAM.
-	; $08 contains the width.</span>
-	%StoreNybbles()
-	LDX $08
-	.loop
-	LDA #$00
-	STA [$6B],y
-	LDA #$01
-	STA [$6E],y
-	%ShiftObjRight()
-	DEX
-	BPL .loop
+    LDY $57
+<span style="color: #808080">    ; StoreNybbles gets the position and size
+    ; of an object and stores them to scratch RAM.
+    ; $08 contains the width.</span>
+    %StoreNybbles()
+    LDX $08
+    .loop
+    LDA #$00
+    STA [$6B],y
+    LDA #$01
+    STA [$6E],y
+    %ShiftObjRight()
+    DEX
+    BPL .loop
 RTS</pre>  Not so hard right? X takes the value of $08 which for a normal
   object is the settings byte's low 4 bits (the width of the object), and
   X decreases each iteration until it reaches $FF, which is below 0.
@@ -325,23 +325,23 @@ RTS</pre>  Not so hard right? X takes the value of $08 which for a normal
 
   Let's take it a step further by adding height:<pre class="code">
 load:
-	LDY $57
-	%StoreNybbles()
-	LDA $09
-	STA $00
-	.loopV
-	LDX $08
-	.loopH
-	LDA #$00
-	STA [$6B],y
-	LDA #$01
-	STA [$6E],y
-	%ShiftObjRight()
-	DEX
-	BPL .loopH
-	%ShiftObjDown()
-	DEC $00
-	BPL .loopV
+    LDY $57
+    %StoreNybbles()
+    LDA $09
+    STA $00
+    .loopV
+    LDX $08
+    .loopH
+    LDA #$00
+    STA [$6B],y
+    LDA #$01
+    STA [$6E],y
+    %ShiftObjRight()
+    DEX
+    BPL .loopH
+    %ShiftObjDown()
+    DEC $00
+    BPL .loopV
 RTS</pre>  Now we have an object that places tiles both vertically and horizontally.
 
   What we did here is basically a loop inside of a loop.
@@ -358,31 +358,31 @@ RTS</pre>  Now we have an object that places tiles both vertically and horizonta
   Okay, that's great and all, but it's just one tile!
   So let's make the next step change the tiles depending on the current position:<pre class="code">
 table:
-	dw $0100,$003F
+    dw $0100,$003F
 
 load:
-	LDY $57
-	%StoreNybbles()
-	LDA $09
-	STA $01
-	LDX #$00
-	.loopV
-	LDA $08
-	STA $00
-	.loopH
-	LDA table,x
-	STA [$6B],y
-	LDA table+1,x
-	STA [$6E],y
-	%ShiftObjRight()
-	DEC $00
-	BPL .loopH
-	%ShiftObjDown()
-	CPX #$00
-	BNE +
-	INX #2
-+	DEC $01
-	BPL .loopV
+    LDY $57
+    %StoreNybbles()
+    LDA $09
+    STA $01
+    LDX #$00
+    .loopV
+    LDA $08
+    STA $00
+    .loopH
+    LDA table,x
+    STA [$6B],y
+    LDA table+1,x
+    STA [$6E],y
+    %ShiftObjRight()
+    DEC $00
+    BPL .loopH
+    %ShiftObjDown()
+    CPX #$00
+    BNE +
+    INX #2
++    DEC $01
+    BPL .loopV
 RTS</pre>  Here's what was changed: X no longer holds the width because we need
   it for indexing the table, so $00 = width, $01 = height, X = tile index.
   
@@ -397,11 +397,11 @@ RTS</pre>  Here's what was changed: X no longer holds the width because we need
   
   You can check the included objects if you want something to base your code on.
 
-	</pre>
+    </pre>
 </div>
 
 <div id="C" class="tabcontent">
-	<pre>
+    <pre>
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
 ; Included Objects                                                        ;
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
@@ -519,11 +519,11 @@ RTS</pre>  Here's what was changed: X no longer holds the width because we need
   These routines should NOT be used together with the standard ones, because their variables are used in different ways.
   See the notes under the header for them in the ASM file.
 
-	</pre>
+    </pre>
 </div>
 
 <div id="D" class="tabcontent">
-	<pre>
+    <pre>
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
 ; Object-Related Addresses and defines                                    ;
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~;
@@ -747,7 +747,7 @@ Similar to $1928, but this may be changed within an object's code, while $1928 w
   
   if the file is a .txt, change it to an .asm file.
 
-	</pre>
+    </pre>
 </div>
 
 <script>
