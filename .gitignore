@@ -3,6 +3,7 @@ build/
 ExGraphics/
 Graphics/
 patches/
+objects/
 releases/
 src/.vs
 sysLMRestore/
