@@ -1,93 +1,160 @@
-incsrc "defines.asm"
+;==========================================================
+; ObjecTool - v2.0.0
+;
+; This wouldn't be possible without the following people:
+;  Original ObjecTool patch - 0x400, imamelia
+;    Modern ObjecTool patch - Arinsu, Burning Loaf
+;  Original ObjecTool tool  - Burning Loaf
+;    Modern ObjecTool tool  - Arinsu
+;==========================================================
 
-org $0DA106|!bank					; x6A306 (hijack extended object loading routine)
-	autoclean JML NewExObjects		; E2 30 A5 59       
+padbyte $00
 
-org $0DA415|!bank					; x6A615 (hijack normal object loading routine)
-	autoclean JML NewNormObjectsJML	; E2 30 AD 31 19
-	NOP								; This jumps to another freecode block, in case routines end up being in another bank...
-									; not sure if it's necessary, but just to be safe, i guess.
+extended_object_ptrs    = $0DA10F|!bank
+done_objects            = $0586D6|!bank
+
+;---
+
+org $0DA100
+    ;   Tool signature in the ROM
+objectool_header:
+    db "OT", $02, $00
+
+    ;   Four bytes reserved for a Retry system springboard
+retry_mmp_handler:
+    if read1($0DA104) != $5C
+        RTL : NOP #3
+    else
+        skip 4
+    endif
+    
+
+    pad $0DA10F
+
+;-
+
+    ;   Object load hijacks
+org $0586C5
+    LDA $5A
+    BNE standard_object
+extended_object:
+    REP #$30
+    autoclean JML load_extended_object
+standard_object:
+    SEP #$30
+    autoclean JML load_standard_object
+
+;---
 
 freecode
-	db "Objectool v.0100"
-;	    0123456789ABCDEF
-	dl parameterWords
-	dl parameterWordsEx
 
-NewExObjects:
-	SEP #$30				; restore hijacked code
-	LDA $59					; and load extended object number (was done in the original code anyway)
-	CMP #$98				; if the extended object number is equal to or greater than 98...
-	BCS CustExObjRt			; then it is a custom extended object
-	JML $0DA10A|!bank		;
-CustExObjRt:				;
-	PHB						;
-	PHK						;
-	PLB						; change the data bank
-	SEC						;
-	SBC #$98				;
-	ASL						; (no need for 16-bit mode because A can never be greater than #$D0 here)
-	TAX						;
-	LSR						; keep the extended object number in A (in case it needs to be checked)
-	SEC						; set carry to indicate object is extended
-	JSR (ExtendedObjPtrs,x)	;
-	PLB						;
-	JML $0DA53C|!bank		; jump to an RTS in bank 0D
+    ;   AXY 16-bit on entry
+    ;   This handler now takes care of both vanilla and custom objects.
+load_extended_object:
+    PHB
 
-NewNormObjects:
-	SEP #$30				;
-	LDA $5A					; check the object number
-	CMP #$2D				; if it is equal to 2D...
-	BEQ CustNormObjRt		; then it is a custom normal object
-NotCustomN:					;
-	LDA $1931|!addr			; hijacked code
-	JML $0DA41A|!bank		;
-CustNormObjRt:				;
-	LDY #$00				; start Y at 00
-	LDA [$65],y				; this should point to the next byte
-	STA $5A					; the first new settings byte is the new object number
-	INY						; increment Y to get to the next byte
-	LDA [$65],y				;
-	STA $58					; the second new settings byte
-	INY						; increment Y again...
-	TYA						;
-	CLC						;
-	ADC $65					; add 2 to $65 so that the pointer is in the right place,
-	STA $65					; since this is a 5-byte object (and SMW's code expects them to be 3 bytes)
-	LDA $66					; if the last byte overflowed...
-	ADC #$00				; add 1 to it
-	STA $66					;
-	PHB						;
-	PHK						;
-	PLB						; change the data bank
-	LDA $5A					;
-	REP #$30				;
-	AND #$00FF				;
-	ASL						;
-	TAX						;
-	LDA NormalObjPtrs,x		; the system needs to be different for these since numbers 00-FF are
-	STA $00					; used, making the index go up to #$01FE
-	SEP #$30				;
-	LDA $5A					; keep the extended object number in A (in case it needs to be checked)
-	LDX #$00				;
-	CLC						; clear carry to indicate object is not extended
-	JSR ($0000|!dp,x)		;
-	PLB						;
-	JML $0DA53C|!bank		; jump to an RTS in bank 0D
+    LDA !extended_num
+    ASL
+    ADC !extended_num
+    TAX
+    ;   $00-$02 -> Extended object pointers
+    LDA.l extended_object_ptrs,x
+    STA $00
+    LDA.l extended_object_ptrs+2,x
+    SEP #$30
+    STA $02
+    PHA
+    PLB
 
-NormalObjPtrs:
-	incsrc "work/generatedPointers.asm"	
-ExtendedObjPtrs:
-	incsrc "work/generatedExPointers.asm"
-global #parameterWords:
-	incsrc "work/generatedParameters.asm"
-global #parameterWordsEx:
-	incsrc "work/generatedExParameters.asm"
-	incsrc "work/generatedRoutineMacros.asm"
-namespace nested off
-	incsrc "work/generatedNamespaces.asm"
-	
-freecode
-NewNormObjectsJML:
-	JML NewNormObjects
-	incsrc "work/generatedRoutines.asm"
+    PHK
+    PEA.w custom_object_return-1
+    ;   X -> Extended object number (expected by vanilla extended objects)
+    LDX !extended_num
+    CPX #$98
+    BCS .run_extended_object
+    ;   RTL in bank 0D to redirect the vanilla objects
+    PEA $A413
+    ;   Expected for the old patch's extended ojects
+    SEC
+.run_extended_object
+    JML [$0000|!dp]
+
+;---
+
+    ;   AXY 8-bit on entry
+load_standard_object:
+    ;   If not standard object 2D, run the vanilla object code
+    CMP #$2D
+    BEQ .custom_standard_object
+.vanilla_standard_object
+    ;   Jumping here and not to $0DA411 just in case something else hacks there
+    JSL $0DA40F|!bank
+.done_standard_object
+    SEP #$20
+    REP #$10
+    JML done_objects
+
+.custom_standard_object
+    PHB
+
+    REP #$30
+    ;   Extra byte
+    LDA [$65]
+    XBA
+    STA !extra_byte
+    ;   Custom object number
+    XBA
+    AND #$00FF
+    STA !obj_num
+    ASL
+    ADC !obj_num
+    TAX
+
+    ;   Offset for 2 extra bytes in standard object 2D
+    ;   (ts NOT in a bank border bro :sob::v:)
+    LDA $65
+    INC #2
+    STA $65
+
+    ;   $00-$02 -> Standard object pointers
+    LDA.l standard_object_ptrs,x
+    STA $00
+    LDA.l standard_object_ptrs+2,x
+    SEP #$30
+    STA $02
+
+    ;   In case you're using Retry, this is intended as a jump to run its multiple midway point code
+    if !retry_mmp
+        LDX !obj_num
+        CPX #$42
+        BCC ..is_retry_mmp
+        CPX #$50
+        BEQ ..is_retry_mmp
+        CPX #$51
+        BNE ..no_retry_mmp
+    ..is_retry_mmp
+        JSL retry_mmp_handler|!bank
+        BRA custom_object_return
+
+    ..no_retry_mmp
+    endif
+
+    PHA
+    PLB
+
+    PHK
+    PEA.w custom_object_return-1
+    ;   Expected for the old patch's standard ojects
+    CLC
+    JML [$0000|!dp]
+
+;-
+
+    ;   Used by both springboards above.
+custom_object_return:
+    PLB
+    SEP #$20
+    REP #$10
+    JML done_objects
+
+;---
