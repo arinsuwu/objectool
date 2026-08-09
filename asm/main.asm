@@ -18,8 +18,7 @@ done_objects            = $0586D6|!bank
 org $0DA100
     ;   Tool signature in the ROM
 objectool_header:
-    db "OT", $02, $00
-
+    db "OT", !objectool_version, !objectool_subversion
     ;   Four bytes reserved for a Retry system springboard
 retry_mmp_handler:
     if read1($0DA104) != $5C
@@ -27,7 +26,10 @@ retry_mmp_handler:
     else
         skip 4
     endif
-    
+
+    dl standard_object_ptrs
+    ;   Pointer to standard word parameters
+    dl standard_word_params
 
     pad $0DA10F
 
@@ -49,7 +51,7 @@ standard_object:
 freecode
 
     ;   AXY 16-bit on entry
-    ;   This handler now takes care of both vanilla and custom objects.
+    ;   This handler now takes care of both vanilla and custom objects
 load_extended_object:
     PHB
 
@@ -150,7 +152,7 @@ load_standard_object:
 
 ;-
 
-    ;   Used by both springboards above.
+    ;   Used by both springboards above
 custom_object_return:
     PLB
     SEP #$20

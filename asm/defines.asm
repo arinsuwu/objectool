@@ -30,6 +30,11 @@ else
     !bank8 #= $80
 endif
 
+    optimize dp always
+    dpbase !dp
+    optimize address mirrors
+    bank auto
+
 ;---
 
 ;   Extended defines
@@ -54,7 +59,7 @@ endif
 ;-
 
 ;   Retry Multiple Midway Points check
-;   TODO: better Retry check, specific to its MMP
+;   TODO: better Retry check, specific to its MMPs
 ;   Kaijyuu's MMPs are compatible as is
     !retry_mmp  = 0
 if read1($008E5B) == $5C
@@ -64,18 +69,18 @@ endif
 ;---
 
 ;   Tool versioning
-!objectool_version #= $0100
-!objectool_check    = equal(read4(read3($0DA107)-$16),$656A624F)&equal(read4(read3($0DA107)-$16+4),$6F6F7463)&equal(read1(read3($0DA107)-$16+8),$6C)
-if !objectool_check
-    !objectool_version_ROM      = ((read1(read3($0DA107)-$16+12)&$F)<<12)|((read1(read3($0DA107)-$16+13)&$F)<<8)|((read1(read3($0DA107)-$16+14)&$F)<<4)|(read1(read3($0DA107)-$16+14)&$F)
-else
-    !objectool_check = equal(read4(read3($0DA107)),$59A530E2)&equal(read2(read3($0DA107)+4),$98C9)
-    if !objectool_check
-        !objectool_version_ROM  = $0050
-    else
-        !objectool_version_ROM  = 0
-    endif
-endif
+; !objectool_version #= $0100
+; !objectool_check    = equal(read4(read3($0DA107)-$16),$656A624F)&equal(read4(read3($0DA107)-$16+4),$6F6F7463)&equal(read1(read3($0DA107)-$16+8),$6C)
+; if !objectool_check
+;     !objectool_version_ROM      = ((read1(read3($0DA107)-$16+12)&$F)<<12)|((read1(read3($0DA107)-$16+13)&$F)<<8)|((read1(read3($0DA107)-$16+14)&$F)<<4)|(read1(read3($0DA107)-$16+14)&$F)
+; else
+;     !objectool_check = equal(read4(read3($0DA107)),$59A530E2)&equal(read2(read3($0DA107)+4),$98C9)
+;     if !objectool_check
+;         !objectool_version_ROM  = $0050
+;     else
+;         !objectool_version_ROM  = 0
+;     endif
+; endif
 
 ;---
 
@@ -91,9 +96,11 @@ endif
 !tileset       #= $1931|!addr
 !tile_screen   #= $1BA1|!addr
 
-; 80+ bytes used for scratch RAM in some routines to build tables
-; the address doesn't particularly matter as long as anything else that would need it
-; reloads it before using it but after object code runs
+!extended_start = $98
+
+;   80+ bytes used for scratch RAM in some routines to build tables
+;   The address doesn't particularly matter, as long as anything else that would need it
+;   reloads it before using it but after object code runs
 !obj_scratch   #= $0910|!addr
 !ObjScratch    #= !obj_scratch
 

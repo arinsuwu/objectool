@@ -127,9 +127,9 @@ main:
     STA $02
     LDA #$C800
     STA $6B
-    LDA #$0000|!map16
+    LDA #$0000|!ram8
     STA $6D
-    LDA #$00C8|((!map16|$01)<<8)
+    LDA #$00C8|((!ram8|$01)<<8)
     STA $6F
     LDA $04
     STA $08
