@@ -21,7 +21,7 @@ objectool_header:
     db "OT", !objectool_version, !objectool_subversion
     ;   Four bytes reserved for a Retry system springboard
 retry_mmp_handler:
-    if read1($0DA104) != $5C
+    if not(!retry_mmp)
         RTL : NOP #3
     else
         skip 4
@@ -45,6 +45,15 @@ extended_object:
 standard_object:
     SEP #$30
     autoclean JML load_standard_object
+
+;-
+
+    ;   Potential restore
+if and(!retry_mmp, equal(read1($0DA415), $5C))
+    org $0DA415
+        SEP #$30
+        LDA $1931|!addr
+endif
 
 ;---
 

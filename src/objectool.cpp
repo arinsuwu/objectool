@@ -193,6 +193,13 @@ incsrc \"{0}asm/macro.asm\"\n\
         )
     );
 
+    // Retry
+    bool retry = rom.read<1>(0x008E5B) == 0x5C;
+    bool retry_mmp = (rom.read<1>(OBJECTOOL_SIGNATURE_PTR+4) == 0x5C) && (rom.read<2>(rom.read<3>(0x0DA104+1, true)-3, true) == 0x1337);
+
+    /*
+        Actual tool execution
+    */
     // Figure out whether the tool's been used and clean-up if so
     if(rom.read<2>(OBJECTOOL_SIGNATURE_PTR, true)==MAGIC_CONSTANT)
     {
@@ -255,8 +262,8 @@ macro insert_routine(routine_name, routine_path, routine_offset)\n\
                         dl <routine_name>\n\
                 endif\n\
             pullpc\n\
-            !{{inserted_<routine_name>}}   #= 1\n\
-            !routine_inserted              #= 1\n\
+            !{{inserted_<routine_name>}} #= 1\n\
+            !routine_inserted            #= 1\n\
         endif\n\
     endif\n\
 endmacro\n\
@@ -309,29 +316,31 @@ endwhile\n\
     std::ofstream(tool_folder+"asm/ssr.asm").write(individual_routine_macro.c_str(), individual_routine_macro.size());
 
     // Pointers for object code
-    unsigned char * standard_obj_ptrs = new unsigned char[0x100*3] {};
-    unsigned char * extended_obj_ptrs = new unsigned char[EXTENDED_OBJECT_SIZE*3] {};
+    unsigned char * standard_obj_ptrs = new unsigned char[0x100*3];
+    unsigned char * extended_obj_ptrs = new unsigned char[EXTENDED_OBJECT_SIZE*3];
 
     // Arrays for word parameters
-    unsigned char * standard_word_params = new unsigned char[0x100*2] {};
-    unsigned char * extended_word_params = new unsigned char[EXTENDED_OBJECT_SIZE*2] {};
+    unsigned char * standard_word_params = new unsigned char[0x100*2];
+    unsigned char * extended_word_params = new unsigned char[EXTENDED_OBJECT_SIZE*2];
 
-    for(int i=0;i<0x100;i+=3)
+    for(int i=0;i<0x100;++i)
     {
-        standard_obj_ptrs[i]   = 0x14;
-        standard_obj_ptrs[1+i] = 0xA4;
-        standard_obj_ptrs[2+i] = 0x0D;
+        standard_obj_ptrs[i*3]   = 0x14;
+        standard_obj_ptrs[1+i*3] = 0xA4;
+        standard_obj_ptrs[2+i*3] = 0x0D;
 
-        standard_word_params[i] = 0x00;
+        standard_word_params[i*2] = 0x00;
+        standard_word_params[1+i*2] = 0x00;
     }
 
-    for(int i=0;i<EXTENDED_OBJECT_SIZE;i+=3)
+    for(int i=0;i<EXTENDED_OBJECT_SIZE;++i)
     {
-        extended_obj_ptrs[i]   = 0x14;
-        extended_obj_ptrs[1+i] = 0xA4;
-        extended_obj_ptrs[2+i] = 0x0D;
+        extended_obj_ptrs[i*3]   = 0x14;
+        extended_obj_ptrs[1+i*3] = 0xA4;
+        extended_obj_ptrs[2+i*3] = 0x0D;
 
-        extended_word_params[i] = 0x00;
+        extended_word_params[i*2] = 0x00;
+        extended_word_params[1+i*2] = 0x00;
     }
 
     // Word parameters
@@ -356,8 +365,6 @@ print hex(standard_word_params, 6) \n\
     );
     if(!rom.inline_patch(tool_folder, word_params_patch.c_str()))
         exit(error("Something went wrong while inserting the word parameters. Details: {}\n", asar_geterrors(&asar_errcount)->fullerrdata));
-    if(!rom.reload())
-        exit(error("Something went wrong while inserting the word parameters."));
 
     auto word_param_print = asar_getprints(&asar_errcount);
     std::string word_param_addr(word_param_print[0]);
@@ -421,6 +428,7 @@ print hex(standard_word_params, 6) \n\
             if(!inserting_extended)
             {
                 // Standard objects
+                if( retry_mmp && ( (object_number<0x42) || (object_number==0x50) || (object_number==0x51) ) ) throw std::out_of_range("");
                 if( (standard_obj_ptrs[2+object_number*3]<<16 | standard_obj_ptrs[1+object_number*3]<<8 | standard_obj_ptrs[object_number*3]) != 0x0DA414 ) throw std::invalid_argument("");
             }
             else
@@ -472,39 +480,37 @@ namespace off\n\
             if(!rom.inline_patch(tool_folder, object_patch.c_str()))
                 exit(error("Could not insert {} object {}. Details: {}\n", inserting_extended ? "extended" : "standard", object_filename, asar_geterrors(&asar_errcount)->fullerrdata));
 
-            if(!rom.reload())
-                exit(error("Could not insert {} object {}.", inserting_extended ? "extended" : "standard", object_filename));
             else
             {
                 auto object_print = asar_getprints(&asar_errcount);
                 std::size_t pos {};
                 for(int i=0;i<asar_errcount;++i)
                 {
-                        std::string object_addr(object_print[i]);
-                        if(verbose)
-                            fmt::println("{}", object_addr);
-                        if( (object_addr.substr(0,6) != "Shared") && (object_addr.find('$') != std::string::npos) )
+                    std::string object_addr(object_print[i]);
+                    if(verbose)
+                        fmt::println("{}", object_addr);
+                    if( (object_addr.substr(0,6) != "Shared") && (object_addr.find('$') != std::string::npos) )
+                    {
+                        object_addr = std::string(object_addr.begin()+object_addr.find_first_of("$")+1, object_addr.end());
+                        if(inserting_extended)
                         {
-                            object_addr = std::string(object_addr.begin()+object_addr.find_first_of("$")+1, object_addr.end());
-                            if(inserting_extended)
-                            {
-                                extended_obj_ptrs[2+(object_number-EXTENDED_OBJECT_START)*3] = std::stoi(std::string(object_addr.begin(),object_addr.begin()+2), &pos, 16);
-                                extended_obj_ptrs[1+(object_number-EXTENDED_OBJECT_START)*3] = std::stoi(std::string(object_addr.begin()+2,object_addr.begin()+4), &pos, 16);
-                                extended_obj_ptrs[0+(object_number-EXTENDED_OBJECT_START)*3] = std::stoi(std::string(object_addr.begin()+4,object_addr.begin()+6), &pos, 16);
+                            extended_obj_ptrs[2+(object_number-EXTENDED_OBJECT_START)*3] = std::stoi(std::string(object_addr.begin(),object_addr.begin()+2), &pos, 16);
+                            extended_obj_ptrs[1+(object_number-EXTENDED_OBJECT_START)*3] = std::stoi(std::string(object_addr.begin()+2,object_addr.begin()+4), &pos, 16);
+                            extended_obj_ptrs[0+(object_number-EXTENDED_OBJECT_START)*3] = std::stoi(std::string(object_addr.begin()+4,object_addr.begin()+6), &pos, 16);
 
-                                extended_word_params[1+(object_number-EXTENDED_OBJECT_START)*2] = (word_parameter>>8)&0xFF;
-                                extended_word_params[0+(object_number-EXTENDED_OBJECT_START)*2] = word_parameter&0xFF;
-                            }
-                            else
-                            {
-                                standard_obj_ptrs[2+object_number*3] = std::stoi(std::string(object_addr.begin(),object_addr.begin()+2), &pos, 16);
-                                standard_obj_ptrs[1+object_number*3] = std::stoi(std::string(object_addr.begin()+2,object_addr.begin()+4), &pos, 16);
-                                standard_obj_ptrs[0+object_number*3] = std::stoi(std::string(object_addr.begin()+4,object_addr.begin()+6), &pos, 16);
-
-                                standard_word_params[1+object_number*2] = (word_parameter>>8)&0xFF;
-                                standard_word_params[0+object_number*2] = word_parameter&0xFF;
-                            }
+                            extended_word_params[1+(object_number-EXTENDED_OBJECT_START)*2] = (word_parameter>>8)&0xFF;
+                            extended_word_params[0+(object_number-EXTENDED_OBJECT_START)*2] = word_parameter&0xFF;
                         }
+                        else
+                        {
+                            standard_obj_ptrs[2+object_number*3] = std::stoi(std::string(object_addr.begin(),object_addr.begin()+2), &pos, 16);
+                            standard_obj_ptrs[1+object_number*3] = std::stoi(std::string(object_addr.begin()+2,object_addr.begin()+4), &pos, 16);
+                            standard_obj_ptrs[0+object_number*3] = std::stoi(std::string(object_addr.begin()+4,object_addr.begin()+6), &pos, 16);
+
+                            standard_word_params[1+object_number*2] = (word_parameter>>8)&0xFF;
+                            standard_word_params[0+object_number*2] = word_parameter&0xFF;
+                        }
+                    }
                 }
             }
             // TODO - tooltips
@@ -544,8 +550,8 @@ namespace off\n\
         }
         catch(std::out_of_range const & err)
         {
-            fmt::println("{}", err.what());
-            exit(error("Error parsing the list file: incorrect object number\n  {}\n", dirty_object));
+            const char * retry = retry_mmp&(!inserting_extended) ? "If using Retry's Multiple Midway Points, standard objects 00-42, 50 and 51 are reserved." : "";
+            exit(error("Error parsing the list file: incorrect object number\n  {}\n{}", dirty_object, retry));
         }
     }
 
@@ -593,6 +599,8 @@ org extended_object_ptrs+(${0:0>2X}*3)\n\
 
     // Done
     fmt::println("All objects inserted successfully!");
+    if(retry && !retry_mmp)
+        fmt::println("If using Retry's Multiple Midway Points, please re-insert Retry (run UberASMTool again)!");
     rom.done();
     // map16.done(std::string(rom_name+".s16ov").c_str());
 
