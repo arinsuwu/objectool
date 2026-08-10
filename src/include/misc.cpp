@@ -76,7 +76,7 @@ void acquire_list(std::string* list_path)
     cleanup(string tool_folder) -> bool: Erase temporary files
     ---
     Input:
-    * tool_folder is the path to BOWSIE 
+    * tool_folder is the path to the tool 
 
     Output:
     * true if temporary files were removed, false otherwise

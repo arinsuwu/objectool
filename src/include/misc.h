@@ -11,7 +11,7 @@
 #include <fmt/base.h>
 
 /*
-    Auxiliary functions BOWSIE uses
+    Auxiliary functions the tool uses
     ---
 */
 

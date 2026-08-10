@@ -3,15 +3,15 @@
 namespace ranges = std::ranges;
 
 /*
-    parse_cli_settings(vector<string>& cli_settings, map<string, variant<bool, int, string>>& bowsie_settings) -> void: Parse settings from CLI
+    parse_cli_settings(vector<string>& cli_settings, map<string, variant<bool, int, string>>& tool_settings) -> void: Parse settings from CLI
     ---
     Input:
     - cli_settings is a vector which holds the command line arguments
-    - bowsie_settings is a vector to hold the settings
+    - tool_settings is a vector to hold the settings
 
     Output:
     - exits with error if a setting does not exist
-    - bowsie_settings now contains the processed settings
+    - tool_settings now contains the processed settings
 */
 void parse_cli_settings(std::vector<std::string>& cli_settings, std::map<std::string, std::variant<bool, std::string>>& tool_settings)
 {
