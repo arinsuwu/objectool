@@ -59,7 +59,6 @@ endif
 ;-
 
 ;   Retry Multiple Midway Points check
-;   TODO: better Retry check, specific to its MMPs
 ;   Kaijyuu's MMPs are compatible as is
     !retry_mmp  = 0
 if read1($0DA104) == $5C && read2(read3($0DA104+1)-3) == $1337
