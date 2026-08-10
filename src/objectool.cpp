@@ -374,8 +374,9 @@ print hex(standard_word_params, 6) \n\
     int extended_obj_count = 0;
     bool inserting_extended = false;
 
+    // Object assembly
     // TODO: Tooltip
-
+    std::vector<std::tuple<std::string, int, bool>> inserted_objects;
     for(std::string dirty_object; std::getline(list, dirty_object);)
     {
         try
@@ -414,6 +415,71 @@ print hex(standard_word_params, 6) \n\
             cleanup_str(&object_filename);
             if(!object_filename.ends_with(".asm") && !object_filename.ends_with(".asm\""))
                 exit(error("Unknown extension for object {}", object_filename));
+
+            bool already_inserted = false;
+            for(std::tuple<std::string, int, bool> inserted_object : inserted_objects)
+            {
+                std::string inserted_object_filename = std::get<std::string>(inserted_object);
+                int inserted_object_number = std::get<int>(inserted_object);
+                bool inserted_extended_object = std::get<bool>(inserted_object);
+
+                if(object_filename == inserted_object_filename)
+                {
+                    if(inserting_extended)
+                    {
+                        if(inserted_extended_object)
+                        {
+                            extended_obj_ptrs[2+(object_number-EXTENDED_OBJECT_START)*3] = extended_obj_ptrs[2+(inserted_object_number-EXTENDED_OBJECT_START)*3];
+                            extended_obj_ptrs[1+(object_number-EXTENDED_OBJECT_START)*3] = extended_obj_ptrs[1+(inserted_object_number-EXTENDED_OBJECT_START)*3];
+                            extended_obj_ptrs[0+(object_number-EXTENDED_OBJECT_START)*3] = extended_obj_ptrs[0+(inserted_object_number-EXTENDED_OBJECT_START)*3];
+                        }
+                        else
+                        {
+                            extended_obj_ptrs[2+(object_number-EXTENDED_OBJECT_START)*3] = standard_obj_ptrs[2+inserted_object_number*3];
+                            extended_obj_ptrs[1+(object_number-EXTENDED_OBJECT_START)*3] = standard_obj_ptrs[1+inserted_object_number*3];
+                            extended_obj_ptrs[0+(object_number-EXTENDED_OBJECT_START)*3] = standard_obj_ptrs[0+inserted_object_number*3];
+                        }
+
+                        extended_word_params[1+(object_number-EXTENDED_OBJECT_START)*2] = (word_parameter>>8)&0xFF;
+                        extended_word_params[0+(object_number-EXTENDED_OBJECT_START)*2] = word_parameter&0xFF;
+                    }
+                    else
+                    {
+                        if(inserted_extended_object)
+                        {
+                            standard_obj_ptrs[2+object_number*3] = extended_obj_ptrs[2+(inserted_object_number-EXTENDED_OBJECT_START)*3];
+                            standard_obj_ptrs[1+object_number*3] = extended_obj_ptrs[1+(inserted_object_number-EXTENDED_OBJECT_START)*3];
+                            standard_obj_ptrs[0+object_number*3] = extended_obj_ptrs[0+(inserted_object_number-EXTENDED_OBJECT_START)*3];
+                        }
+                        else
+                        {
+                            standard_obj_ptrs[2+object_number*3] = standard_obj_ptrs[2+inserted_object_number*3];
+                            standard_obj_ptrs[1+object_number*3] = standard_obj_ptrs[1+inserted_object_number*3];
+                            standard_obj_ptrs[0+object_number*3] = standard_obj_ptrs[0+inserted_object_number*3];
+                        }
+
+                        standard_word_params[1+object_number*2] = (word_parameter>>8)&0xFF;
+                        standard_word_params[0+object_number*2] = word_parameter&0xFF;
+                    }
+
+                    if(verbose)
+                    {
+                        fmt::println
+                        (
+                            "{} object {:0>2X} - {}\n    asm file already inserted (was {} object {:0>2X})\n-----------------------------------------------------------",
+                            inserting_extended ? "Extended" : "Standard",
+                            object_number,
+                            object_filename,
+                            inserted_extended_object ? "extended" : "standard",
+                            inserted_object_number
+                        );
+                    }
+
+                    already_inserted = true;
+                    break;
+                }
+            }
+            if(already_inserted) continue;
 
             std::string object_labelname(object_filename.substr(0, object_filename.find_first_of("."))+"_"+std::to_string(object_number));
             cleanup_str(&object_labelname);
@@ -539,6 +605,8 @@ namespace off\n\
             // }
             if(verbose)
                 fmt::println("-----------------------------------------------------------");
+
+            inserted_objects.emplace_back(std::tuple<std::string, int, bool> { object_filename, object_number, inserting_extended });
             if(inserting_extended)
                 ++extended_obj_count;
             else
