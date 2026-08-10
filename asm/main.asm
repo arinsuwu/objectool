@@ -99,17 +99,18 @@ load_standard_object:
 .custom_standard_object
     PHB
 
-    REP #$30
+    LDY #$01
     ;   Extra byte
-    LDA [$65]
-    XBA
+    LDA [$65],y
     STA !extra_byte
     ;   Custom object number
-    XBA
-    AND #$00FF
+    LDA [$65]
     STA !obj_num
+    REP #$30
+    AND #$00FF
+    STA $00
     ASL
-    ADC !obj_num
+    ADC $00
     TAX
 
     ;   Offset for 2 extra bytes in standard object 2D

@@ -88,8 +88,8 @@ endif
 !obj_pos       #= $57
 !extra_byte    #= $58
 !extended_num  #= $59
-!obj_num       #= $59
-!obj_settings  #= $5A
+!obj_settings  #= $59
+!obj_num       #= $5A
 !map16_low      = [$6B]
 !map16_high     = [$6E]
 !obj_screen    #= $1928|!addr
