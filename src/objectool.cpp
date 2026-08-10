@@ -51,6 +51,8 @@ namespace fs = std::filesystem;
 #define EXTENDED_OBJECT_START 0x98
 #define EXTENDED_OBJECT_SIZE (0x100-EXTENDED_OBJECT_START)
 
+#define MAX_ROUTINES 100
+
 int main(int argc, char *argv[])
 {
     fmt::println("ObjecTool");
@@ -208,12 +210,11 @@ incsrc \"{0}asm/macro.asm\"\n\
             clean_patch.append(std::format("autoclean ${:0>6X}\n", rom.read<3>(standard_object_ptrs+(i*3), true)));
         clean_patch.append(std::format("autoclean ${:0>6X}\n", standard_object_ptrs));
 
-        int i=0;
-        while(!(rom.read<3>(OBJECTOOL_SSR_PTR+i)==0xFFFFFF || rom.read<3>(OBJECTOOL_SSR_PTR+i)==0x000000))
+        
+        for(int i=0;i<MAX_ROUTINES;i+=3)
         {
             clean_patch.append(std::format("autoclean ${:0>6X}\norg ${:0>6X}\n    dl $FFFFFF\n", rom.read<3>(OBJECTOOL_SSR_PTR+i, true),
                                                                                                OBJECTOOL_SSR_PTR+i));
-            i+=3;
         }
 
         int word_param_ptrs = rom.read<3>(OBJECTOOL_SIGNATURE_PTR+8+3, true);
@@ -287,7 +288,8 @@ endmacro\n\n\
         );
         routine_inserter_macro.append(std::format("    %insert_routine({0}, \"{1}\", {2})\n", routine_name, routine_path, routine_offset));
         routine_offset += 3;
-        ++routines;
+        if(++routines == MAX_ROUTINES)
+            exit(error("Maximum number of shared subroutines exceeded"));
     }
 
     routine_inserter_macro.append(
@@ -301,6 +303,8 @@ endwhile\n\
 "
     );
     fmt::println("{} shared subroutines found.", routines);
+    if(verbose)
+        fmt::println("-----------------------------------------------------------");
     std::ofstream(tool_folder+"asm/ssr_insert.asm").write(routine_inserter_macro.c_str(), routine_inserter_macro.size());
     std::ofstream(tool_folder+"asm/ssr.asm").write(individual_routine_macro.c_str(), individual_routine_macro.size());
 
@@ -352,11 +356,13 @@ print hex(standard_word_params, 6) \n\
     );
     if(!rom.inline_patch(tool_folder, word_params_patch.c_str()))
         exit(error("Something went wrong while inserting the word parameters. Details: {}\n", asar_geterrors(&asar_errcount)->fullerrdata));
+    if(!rom.reload())
+        exit(error("Something went wrong while inserting the word parameters."));
 
     auto word_param_print = asar_getprints(&asar_errcount);
     std::string word_param_addr(word_param_print[0]);
 
-        // Objects
+    // Objects
     int standard_obj_count = 0;
     int extended_obj_count = 0;
     bool inserting_extended = false;
@@ -465,6 +471,9 @@ namespace off\n\
 
             if(!rom.inline_patch(tool_folder, object_patch.c_str()))
                 exit(error("Could not insert {} object {}. Details: {}\n", inserting_extended ? "extended" : "standard", object_filename, asar_geterrors(&asar_errcount)->fullerrdata));
+
+            if(!rom.reload())
+                exit(error("Could not insert {} object {}.", inserting_extended ? "extended" : "standard", object_filename));
             else
             {
                 auto object_print = asar_getprints(&asar_errcount);
@@ -474,7 +483,7 @@ namespace off\n\
                         std::string object_addr(object_print[i]);
                         if(verbose)
                             fmt::println("{}", object_addr);
-                        if(object_addr.find('$')!=std::string::npos)
+                        if( (object_addr.substr(0,6) != "Shared") && (object_addr.find('$') != std::string::npos) )
                         {
                             object_addr = std::string(object_addr.begin()+object_addr.find_first_of("$")+1, object_addr.end());
                             if(inserting_extended)
@@ -522,8 +531,8 @@ namespace off\n\
             //     else if(verbose)
             //         fmt::println("{} has no tooltip information.", sprite_filename);
             // }
-            // if(verbose)
-            //     fmt::println("-----------------------------------------------------------");
+            if(verbose)
+                fmt::println("-----------------------------------------------------------");
             if(inserting_extended)
                 ++extended_obj_count;
             else
@@ -540,7 +549,7 @@ namespace off\n\
         }
     }
 
-    fmt::println("{} standard objects inserted.\n{}", standard_obj_count, verbose ? "===========================================================" : "");
+    fmt::println("{} standard objects inserted.", standard_obj_count);
     std::ofstream(tool_folder+"asm/standard_ptrs.bin", ios::binary).write((char *)standard_obj_ptrs, 0x100*3);
     std::ofstream(tool_folder+"asm/standard_word_params.bin", ios::binary).write((char *)standard_word_params, 0x100*2);
 
