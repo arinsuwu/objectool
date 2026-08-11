@@ -436,6 +436,7 @@ print hex(standard_word_params, 6) \n\
                 {
                     if(inserting_extended)
                     {
+                        ++extended_obj_count;
                         if(inserted_extended_object)
                         {
                             extended_obj_ptrs[2+(object_number-EXTENDED_OBJECT_START)*3] = extended_obj_ptrs[2+(inserted_object_number-EXTENDED_OBJECT_START)*3];
@@ -454,6 +455,7 @@ print hex(standard_word_params, 6) \n\
                     }
                     else
                     {
+                        ++standard_obj_count;
                         if(inserted_extended_object)
                         {
                             standard_obj_ptrs[2+object_number*3] = extended_obj_ptrs[2+(inserted_object_number-EXTENDED_OBJECT_START)*3];
