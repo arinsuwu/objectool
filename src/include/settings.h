@@ -11,8 +11,6 @@
 
 #include <fmt/base.h>
 
-#include <nlohmann/json.hpp>
-
 #include "misc.h"
 
 
@@ -28,6 +26,5 @@ static const char * bool_keys[] = {"verbose", "generate_tooltip"};
     Check the readme for more info
 */
 
-bool deserialize_json(nlohmann::json&, std::map<std::string, std::variant<bool, int, std::string>>&, std::string*);
 void parse_cli_settings(std::vector<std::string>&, std::map<std::string, std::variant<bool, std::string>>&);
 

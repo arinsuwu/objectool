@@ -14,7 +14,7 @@ list(APPEND OBJECTOOL_SOURCE
     "objectool.cpp"
 
     "include/misc.cpp"
-    "include/map16.cpp"
+    "include/tooltip.cpp"
     "include/rom.cpp"
     "include/settings.cpp"
 
@@ -30,7 +30,7 @@ endif()
 
 add_executable(objectool ${OBJECTOOL_SOURCE})
 
-list(APPEND OBJECTOOL_LIBRARIES PRIVATE fmt::fmt PRIVATE nlohmann_json::nlohmann_json)
+list(APPEND OBJECTOOL_LIBRARIES PRIVATE fmt::fmt)
 if(NOT ASAR_DYNAMIC_LINK)
     target_link_libraries(objectool PRIVATE asar-static)
 else()

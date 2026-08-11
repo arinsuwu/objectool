@@ -26,10 +26,9 @@
 #else
     #include "include/asar/asar.h"
 #endif
-#include <nlohmann/json.hpp>
 
 #include "include/misc.h"
-#include "include/map16.h"
+#include "include/tooltip.h"
 #include "include/rom.h"
 #include "include/settings.h"
 
@@ -205,8 +204,8 @@ incsrc \"{0}asm/macro.asm\"\n\
     {
         if(verbose)
             fmt::println("Performing clean-up of a previous execution...");
-        if(!destroy_map16(rom_name))
-            exit(error("Error cleaning up existing Map16 files. Exiting..."));
+        if(!destroy_tooltip(rom_name))
+            exit(error("Error cleaning up existing object tooltip files. Exiting..."));
 
         std::string clean_patch;
         for(int i=EXTENDED_OBJECT_START; i<0x100; ++i)
@@ -374,9 +373,17 @@ print hex(standard_word_params, 6) \n\
     int extended_obj_count = 0;
     bool inserting_extended = false;
 
+    Tooltip tooltip;
+    if(generate_tooltip)
+    {
+        tooltip.open_osc(std::string(rom_name+".osc").c_str());
+        tooltip.open_mw0t(std::string(rom_name+".mw0t").c_str());
+        tooltip.open_mw0(std::string(rom_name+".mw0").c_str());
+    }
+
     // Object assembly
-    // TODO: Tooltip
-    std::vector<std::tuple<std::string, int, bool>> inserted_objects;
+    std::string e;
+    std::vector<std::tuple<std::string, int, bool, std::string, std::string>> inserted_objects;
     for(std::string dirty_object; std::getline(list, dirty_object);)
     {
         try
@@ -417,11 +424,13 @@ print hex(standard_word_params, 6) \n\
                 exit(error("Unknown extension for object {}", object_filename));
 
             bool already_inserted = false;
-            for(std::tuple<std::string, int, bool> inserted_object : inserted_objects)
+            for(std::tuple<std::string, int, bool, std::string, std::string> inserted_object : inserted_objects)
             {
-                std::string inserted_object_filename = std::get<std::string>(inserted_object);
+                std::string inserted_object_filename = std::get<0>(inserted_object);
                 int inserted_object_number = std::get<int>(inserted_object);
                 bool inserted_extended_object = std::get<bool>(inserted_object);
+                std::string inserted_object_tooltip = std::get<3>(inserted_object);
+                std::string inserted_object_list = std::get<4>(inserted_object);
 
                 if(object_filename == inserted_object_filename)
                 {
@@ -461,6 +470,11 @@ print hex(standard_word_params, 6) \n\
                         standard_word_params[1+object_number*2] = (word_parameter>>8)&0xFF;
                         standard_word_params[0+object_number*2] = word_parameter&0xFF;
                     }
+
+                    if(!tooltip.write_display_tooltip(false, object_number, inserted_object_tooltip, inserting_extended, &e))
+                        exit(error("A problem has ocurred while generating display tooltips for {} - details:\n{}", dirty_object, e));
+                    if(!tooltip.write_list_tooltip(false, object_number, inserted_object_list, inserting_extended, &e))
+                        exit(error("A problem has ocurred while generating list displays for {} - details:\n{}", dirty_object, e));
 
                     if(verbose)
                     {
@@ -529,8 +543,12 @@ extended_word_params = ${5}|!bank+512\n\
 namespace {1}\n\
     freecode cleaned\n\
     incsrc {4}\n\
+    !tooltip   ?= \"Object with filename {2}\"\n\
+    !list      ?= \"{2}\"\n\
     print \"{0} object {3:0>2X} - {2}\"\n\
-    print \"    Inserted at: $\", hex({1}_load)\n\n\
+    print \"    Inserted at: $\", hex({1}_load)\n\
+    print \"    Tooltip text: !tooltip\"\n\
+    print \"    List info: !list\"\n\n\
     incsrc ssr_insert.asm\n\
 namespace off\n\
 ",
@@ -543,9 +561,10 @@ namespace off\n\
                 )
             );
 
+            std::string object_display_tooltip;
+            std::string object_list_tooltip;
             if(!rom.inline_patch(tool_folder, object_patch.c_str()))
                 exit(error("Could not insert {} object {}. Details: {}\n", inserting_extended ? "extended" : "standard", object_filename, asar_geterrors(&asar_errcount)->fullerrdata));
-
             else
             {
                 auto object_print = asar_getprints(&asar_errcount);
@@ -577,36 +596,34 @@ namespace off\n\
                             standard_word_params[0+object_number*2] = word_parameter&0xFF;
                         }
                     }
+                    else if(object_addr.find("Tooltip text:")!=std::string::npos)
+                    {
+                        object_display_tooltip = std::string(object_addr.begin()+object_addr.find_first_of(":")+2, object_addr.end());
+                        if(!tooltip.write_display_tooltip(false, object_number, object_display_tooltip, inserting_extended, &e))
+                            exit(error("A problem has ocurred while generating display tooltips for {} - details:\n{}", dirty_object, e));
+                    }
+                    else if(object_addr.find("List info:")!=std::string::npos)
+                    {
+                        object_list_tooltip = std::string(object_addr.begin()+object_addr.find_first_of(":")+2, object_addr.end());
+                        if(!tooltip.write_list_tooltip(false, object_number, object_list_tooltip, inserting_extended, &e))
+                            exit(error("A problem has ocurred while generating list displays for {} - details:\n{}", dirty_object, e));
+                    }
                 }
             }
-            // TODO - tooltips
-            // if(generate_map16)
-            // {
-            //     std::string sprite_tooltip_path = tool_folder+"sprites/"+std::string(sprite_filename.begin(), sprite_filename.begin()+sprite_filename.find_first_of(".")+1)+"json";
-            //     std::ifstream ifs(sprite_tooltip_path);
-            //     if(!(!ifs))
-            //     {
-            //         std::string e;
-            //         if(verbose)
-            //             fmt::println("Parsing tooltip information for {}...", sprite_filename);
-            //         nlohmann::json sprite_tooltip = nlohmann::json::parse(ifs, nullptr, false);
-            //         if(sprite_tooltip.is_discarded())
-            //         exit(error("A problem occurred while parsing {}. Please ensure the file isn't corrupted and has a valid JSON format.", sprite_tooltip_path));
-            //         if(!map16.deserialize_json(sprite_tooltip, &e))
-            //         exit(error("A problem occurred while parsing specific tooltips for {}. Details:\n{}", sprite_tooltip_path, e));
-            //         e = "";
-            //         if(!map16.write_tooltip(sprite_number, &e))
-            //             exit(error("A problem has ocurred while generating tooltips for {}. Details:\n{}", sprite_tooltip_path, e));
-            //         else if(verbose)
-            //             fmt::println("Done.");
-            //     }
-            //     else if(verbose)
-            //         fmt::println("{} has no tooltip information.", sprite_filename);
-            // }
             if(verbose)
                 fmt::println("-----------------------------------------------------------");
 
-            inserted_objects.emplace_back(std::tuple<std::string, int, bool> { object_filename, object_number, inserting_extended });
+            inserted_objects.emplace_back
+            (
+                std::tuple<std::string, int, bool, std::string, std::string>
+                {
+                    object_filename,
+                    object_number,
+                    inserting_extended,
+                    object_display_tooltip,
+                    object_list_tooltip
+                }
+            );
             if(inserting_extended)
                 ++extended_obj_count;
             else
@@ -624,12 +641,12 @@ namespace off\n\
     }
 
     fmt::println("{} standard objects inserted.", standard_obj_count);
-    std::ofstream(tool_folder+"asm/standard_ptrs.bin", ios::binary).write((char *)standard_obj_ptrs, 0x100*3);
-    std::ofstream(tool_folder+"asm/standard_word_params.bin", ios::binary).write((char *)standard_word_params, 0x100*2);
+    std::ofstream(tool_folder+"asm/standard_ptrs.bin", ios::binary).write(reinterpret_cast<const char*>(standard_obj_ptrs), 0x100*3);
+    std::ofstream(tool_folder+"asm/standard_word_params.bin", ios::binary).write(reinterpret_cast<const char*>(standard_word_params), 0x100*2);
 
     fmt::println("{} extended objects inserted.\n{}", extended_obj_count, verbose ? "===========================================================" : "");
-    std::ofstream(tool_folder+"asm/extended_ptrs.bin", ios::binary).write((char *)extended_obj_ptrs, EXTENDED_OBJECT_SIZE*3);
-    std::ofstream(tool_folder+"asm/extended_word_params.bin", ios::binary).write((char *)extended_word_params, EXTENDED_OBJECT_SIZE*2);
+    std::ofstream(tool_folder+"asm/extended_ptrs.bin", ios::binary).write(reinterpret_cast<const char*>(extended_obj_ptrs), EXTENDED_OBJECT_SIZE*3);
+    std::ofstream(tool_folder+"asm/extended_word_params.bin", ios::binary).write(reinterpret_cast<const char*>(extended_word_params), EXTENDED_OBJECT_SIZE*2);
 
     // Objects patch
     full_patch.append
@@ -670,7 +687,7 @@ org extended_object_ptrs+(${0:0>2X}*3)\n\
     if(retry && !retry_mmp)
         fmt::println("If using Retry's Multiple Midway Points, please re-insert Retry (run UberASMTool again)!");
     rom.done();
-    // map16.done(std::string(rom_name+".s16ov").c_str());
+    tooltip.done(std::string(rom_name+".mw0").c_str());
 
     if(!cleanup(tool_folder))
         exit(error("Error cleaning up temporary files. Exiting... (Your ROM was still saved anyway)"));

@@ -11,6 +11,9 @@ uberasm/
 *.map16
 *.pal
 *.palmask
+*.mw0
+*.mw0t
+*.osc
 *.bin
 *.smc
 *.srm
