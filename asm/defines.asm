@@ -67,28 +67,12 @@ endif
 
 ;---
 
-;   Tool versioning
-; !objectool_version #= $0100
-; !objectool_check    = equal(read4(read3($0DA107)-$16),$656A624F)&equal(read4(read3($0DA107)-$16+4),$6F6F7463)&equal(read1(read3($0DA107)-$16+8),$6C)
-; if !objectool_check
-;     !objectool_version_ROM      = ((read1(read3($0DA107)-$16+12)&$F)<<12)|((read1(read3($0DA107)-$16+13)&$F)<<8)|((read1(read3($0DA107)-$16+14)&$F)<<4)|(read1(read3($0DA107)-$16+14)&$F)
-; else
-;     !objectool_check = equal(read4(read3($0DA107)),$59A530E2)&equal(read2(read3($0DA107)+4),$98C9)
-;     if !objectool_check
-;         !objectool_version_ROM  = $0050
-;     else
-;         !objectool_version_ROM  = 0
-;     endif
-; endif
-
-;---
-
 ;   Helper defines for custom objects
 !obj_pos       #= $57
-!extra_byte    #= $58
 !extended_num  #= $59
 !obj_settings  #= $59
 !obj_num       #= $5A
+!extra_byte    #= $58
 !map16_low      = [$6B]
 !map16_high     = [$6E]
 !obj_screen    #= $1928|!addr
