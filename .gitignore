@@ -1,5 +1,6 @@
 .vscode/
 build/
+docs/book
 ExGraphics/
 Graphics/
 patches/
@@ -18,6 +19,7 @@ uberasm/
 *.smc
 *.srm
 *.sfc
+*.dll
 *.exe
 *.res
 *.ifc
