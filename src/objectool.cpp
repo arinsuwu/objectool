@@ -539,8 +539,11 @@ print hex(standard_word_params, 6) \n\
 incsrc defines.asm\n\
 incsrc ssr.asm\n\
 incsrc macro.asm\n\
-standard_word_params = ${5}|!bank\n\
-extended_word_params = ${5}|!bank+512\n\
+standard_word_params    = ${5}|!bank\n\
+extended_word_params    = ${5}|!bank+512\n\
+!objectool_version     #= {6}\n\
+!objectool_subversion  #= {7}\n\
+!word_param            #= {8}\n\
 \n\
 namespace {1}\n\
     freecode cleaned\n\
@@ -559,7 +562,10 @@ namespace off\n\
                     object_filename,
                     object_number,
                     ("\""+tool_folder+objects_path+"/"+object_filename+"\""),
-                    word_param_addr
+                    word_param_addr,
+                    VERSION,
+                    SUBVER,
+                    word_parameter
                 )
             );
 
