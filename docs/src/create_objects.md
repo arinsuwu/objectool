@@ -166,8 +166,8 @@ As mentioned before, ObjecTool allows you to create display tooltips and list en
 
 Define | Purpose
 -|-
-`!tooltip` | The text displayed when you hover over the object in Lunar Magic.
-`!list` | The text displayed on the Custom Collections of Objects list in Lunar Magic.
+`!tooltip` | The text displayed when you hover over object N in Lunar Magic.
+`!list` | The text displayed on the Custom Collections of Objects list for object N in Lunar Magic.
 
 You would fill the defines as you would any other, inside the object's asm file, with the string you want to show. For example:
 ```asar
@@ -175,6 +175,31 @@ You would fill the defines as you would any other, inside the object's asm file,
 !list    = "Custom object."
 ```
 
-If you don't fill these, a default generic string will be given for both.  
+If you don't fill these, a default generic string will be given for both.
+
+For inserting multiple copies of objects, each with multiple word parameters, ObjecTool also looks for defines of the form `!tooltip_XXXX` and `!list_XXXX`, where `XXXX` is the word parameter, left padded with zeroes to 4 digits.
+
+Define | Purpose
+-|-
+`!tooltip_XXXX` | The text displayed when you hover over object N with word parameter XXXX in Lunar Magic.
+`!list_XXXX` | The text displayed on the Custom Collections of Objects list for object N with word parameter XXXX in Lunar Magic.
+
+You don't need to provide every single one, of course: if a specific one isn't provided, both fall back to the `!tooltip` and `!list` defines.  
+For example:
+```asar
+!tooltip        = "A custom object. I don't know its word parameter."
+!tooltip_0000   = "A custom object with word parameter 0."
+!tooltip_0005   = "A custom object, this one has word parameter 1."
+!tooltip_0ABC   = "The same custom object, but with word parameter ABC."
+!tooltip_1234   = "Yet again the custom object. But with word parameter 1234! Nice."
+
+!list       = "Custom object."
+!list_0000  = "Custom object, word parameter 0."
+!list_0005  = "Custom object, word parameter 5."
+!list_0ABC  = "Custom object, word parameter ABC."
+!list_1234  = "Custom object, word parameter 1234."
+
+```
+
 Finally, run ObjecTool with `--generate_tooltip=false` to disable tooltips from being made.
 

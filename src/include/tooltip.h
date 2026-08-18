@@ -3,9 +3,16 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <string>
 #include <vector>
 #include <format>
+
+#ifdef ASAR_DYNAMIC_LINK
+    #include "asar/asardll.h"
+#else
+    #include "asar/asar.h"
+#endif
 
 #include <fmt/base.h>
 
@@ -32,6 +39,7 @@ struct Tooltip
     // Tooltip (and main) function
     bool write_display_tooltip(bool, int, std::string, bool, std::string*);
     bool write_list_tooltip(bool, int, std::string, bool, std::string*);
+    bool write_both_tooltips_from_defines(std::map<std::string, std::string>, int, bool, int, std::string*, std::string*, std::string*);
 };
 
 bool destroy_tooltip(std::string filename);

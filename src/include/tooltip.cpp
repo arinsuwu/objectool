@@ -162,3 +162,55 @@ bool Tooltip::write_list_tooltip(bool passthrough, int object_number, std::strin
         return false;
     }
 }
+
+bool Tooltip::write_both_tooltips_from_defines
+(
+    std::map<std::string, std::string> object_defines,
+    int object_number,
+    bool inserting_extended,
+    int word_parameter,
+    std::string* object_display_tooltip,
+    std::string* object_list_tooltip,
+    std::string* err_string
+)
+{
+    for(auto& [define_name, define_value] : object_defines)
+    {
+        bool tooltip_defined = false;
+        bool list_defined = false;
+
+        if(define_name.starts_with("tooltip") && !tooltip_defined)
+        {
+            if( define_name == std::format("tooltip_{:0>4X}", word_parameter) )
+            {
+                *object_display_tooltip = define_value;
+                tooltip_defined = true;
+            }
+            else if(define_name == "tooltip")
+                *object_display_tooltip = define_value;
+        }
+        else if(define_name.starts_with("list") && !list_defined)
+        {
+            if( define_name == std::format("list_{:0>4X}", word_parameter) )
+            {
+                *object_list_tooltip = define_value;
+                list_defined = true;
+            }
+            else if(define_name == "list")
+                *object_list_tooltip = define_value;
+        }
+    }
+
+    const char* obj = inserting_extended ? "extended" : "standard";
+
+    *err_string = std::format("A problem has ocurred while generating display tooltips for {} object {:0>2X} - details:\n", obj, object_number);
+    if(!write_display_tooltip(false, object_number, *object_display_tooltip, inserting_extended, err_string))
+        return false;
+
+    *err_string = std::format("A problem has ocurred while generating list displays for {} object {:0>2X} - details:\n", obj, object_number);
+    if(!write_list_tooltip(false, object_number, *object_list_tooltip, inserting_extended, err_string))
+        return false;
+
+    return true;
+}
+

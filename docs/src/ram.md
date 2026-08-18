@@ -3,12 +3,12 @@
 ## General purpose defines
 Define | Value | Description
 -|-|-
-`sa1` | 1 if SA-1 is installed | Whether SA-1 is being used.
-`fullsa1` | 1 if a 6/8MB SA-1 ROM | Whether this is a big SA-1 ROM (6/8MB).
-`dp` | `$0000` (lorom) / `$3000` (SA-1) | Direct page RAM offset.
-`addr` | `$0000` (lorom) / `$6000` (SA-1) | Address size RAM offset.
-`bank` | `$800000` (lorom) / `$000000` (SA-1) | High bit of the mapper.
-`ram` | `$7E0000` (lorom) / `$400000` (SA-1) | Bank for full RAM.
+`!sa1` | 1 if SA-1 is installed | Whether SA-1 is being used.
+`!fullsa1` | 1 if a 6/8MB SA-1 ROM | Whether this is a big SA-1 ROM (6/8MB).
+`!dp` | `$0000` (lorom) / `$3000` (SA-1) | Direct page RAM offset.
+`!addr` | `$0000` (lorom) / `$6000` (SA-1) | Address size RAM offset.
+`!bank` | `$800000` (lorom) / `$000000` (SA-1) | High bit of the mapper.
+`!ram` | `$7E0000` (lorom) / `$400000` (SA-1) | Bank for full RAM.
 
 ## Helper defines for custom objects
 
