@@ -1,5 +1,7 @@
 #include "tooltip.h"
 
+#include "misc.h"
+
 namespace fs = std::filesystem;
 using ios = std::ios;
 
@@ -43,10 +45,21 @@ bool destroy_tooltip(std::string filename)
     Output:
     * mw0 is now an ifstream with the raw object display data
 */
-void Tooltip::open_mw0(const char* filename)
+void Tooltip::open_mw0(const char* filename, const char* append)
 {
     std::ofstream(filename, ios::app).write("", 0);
-    mw0 = {0x00, 0x00, 0x00, 0x00, 0x00};
+    if(append != "")
+    {
+        std::ifstream append_mw0(append, ios::binary);
+        if(!append_mw0)
+            exit(error("Couldn't open mw0 file {} for appending", append));
+
+        mw0 = std::vector<unsigned char>(std::istream_iterator<unsigned char>(append_mw0), std::istream_iterator<unsigned char>());
+        if(mw0.back() == 0xFF)
+            mw0.pop_back();
+    }
+    else
+        mw0 = {0x00, 0x00, 0x00, 0x00, 0x00};
 }
 
 /*
@@ -58,10 +71,21 @@ void Tooltip::open_mw0(const char* filename)
     Output:
     * mw0t is now an ifstream with the custom object list data
 */
-void Tooltip::open_mw0t(const char* filename)
+void Tooltip::open_mw0t(const char* filename, const char* append)
 {
     std::ofstream(filename, ios::app).write("", 0);
+
     mw0t = std::ofstream(filename, ios::app);
+    if(append != "")
+    {
+        std::ifstream append_mw0t(append);
+        if(!append_mw0t)
+            exit(error("Couldn't open mw0t file {} for appending", append));
+
+        for(std::string next; std::getline(append_mw0t, next);)
+            mw0t.write(next.c_str(), next.size());
+        mw0t.write("\n", 1);
+    }
 }
 
 /*
@@ -73,10 +97,21 @@ void Tooltip::open_mw0t(const char* filename)
     Output:
     * osc is now an ifstream with the custom object tooltip data
 */
-void Tooltip::open_osc(const char* filename)
+void Tooltip::open_osc(const char* filename, const char* append)
 {
     std::ofstream(filename, ios::app).write("", 0);
+
     osc = std::ofstream(filename, ios::app);
+    if(append != "")
+    {
+        std::ifstream append_osc(append);
+        if(!append_osc)
+            exit(error("Couldn't open osc file {} for appending", append));
+
+        for(std::string next; std::getline(append_osc, next);)
+            osc.write(next.c_str(), next.size());
+        osc.write("\n", 1);
+    }
 }
 
 /*

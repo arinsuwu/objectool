@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <string>
 #include <vector>
@@ -31,9 +32,9 @@ struct Tooltip
     std::vector<unsigned char> mw0;
 
     // I/O functions
-    void open_osc(const char*);
-    void open_mw0t(const char*);
-    void open_mw0(const char*);
+    void open_osc(const char*, const char*);
+    void open_mw0t(const char*, const char*);
+    void open_mw0(const char*, const char*);
     void done(const char*);
 
     // Tooltip (and main) function

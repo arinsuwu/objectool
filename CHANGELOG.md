@@ -17,6 +17,8 @@ v2.0.0 (Arinsu)
 - Tool C++ base rewritten.
   - Now equalized with BOWSIE's workflow.
 - Added the ability to generate display tooltips and list entries for Lunar Magic, which were introduced in version 3.60.
+  - The tool includes ``--osc``, ``--mw0`` and ``--mw0t`` switches to append an external set of display files to whatever ObjecTool generates.
+  - The list has ``@osc`` and ``@mw0t`` commands to directly append entries to the display files ObjecTool generates.
 
 This wouldn't have been possible without Burning Loaf, Donut and Kevin, so special thanks to them!
 

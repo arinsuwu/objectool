@@ -40,8 +40,8 @@ EXTENDED:
 ```
 This would insert two standard objects: number `00` with word parameter `$0123`, and number `01` with word parameter `$0000`. It would also insert one extended object: number `98` with word parameter `$0001`.
 
-The list file also has two additional commands: `@osc` and `@mw0t`. These respectively allow you to add new entries directly to the .osc and .mw0/t files respectively. These lines are added as is to both files, *except* for lines containing the `STANDARD:` and `EXTENDED:` labels, used to write the adequate info to the Lunar Magic list. You can put them in either command, but really they're only useful in the `@mw0t` mode.  
-Here is an example of both these commands in action:
+The list file also has two additional commands: `@osc` and `@mw0t`. These allow you to add new entries directly to the .osc and .mw0/t files respectively. These lines are added as they are to both files, *except* for lines containing the `STANDARD:` and `EXTENDED:` labels, used to write the adequate info to the Lunar Magic list. You can put them in either command, but really they're only useful in the `@mw0t` mode.  
+Here is an example of both of these commands in action:
 ```
 @osc
 0	67	0	Object 67, scary...
@@ -120,3 +120,4 @@ Switch | Description
 ``mw0`` | Path to an .mw0 file to which to append info.
 ``mw0t`` | Path to an .mw0t file to which to append info.
 
+Note that ``osc``, ``mw0`` and ``mw0t`` are ignored if ``generate_tooltip`` is ``false``.

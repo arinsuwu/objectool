@@ -378,9 +378,9 @@ print hex(standard_word_params, 6) \n\
     Tooltip tooltip;
     if(generate_tooltip)
     {
-        tooltip.open_osc(std::string(rom_name+".osc").c_str());
-        tooltip.open_mw0t(std::string(rom_name+".mw0t").c_str());
-        tooltip.open_mw0(std::string(rom_name+".mw0").c_str());
+        tooltip.open_osc(std::string(rom_name+".osc").c_str(), osc.c_str());
+        tooltip.open_mw0t(std::string(rom_name+".mw0t").c_str(), mw0t.c_str());
+        tooltip.open_mw0(std::string(rom_name+".mw0").c_str(), mw0.c_str());
     }
 
     // Object and list assembly
