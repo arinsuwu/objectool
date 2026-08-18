@@ -40,6 +40,17 @@ EXTENDED:
 ```
 This would insert two standard objects: number `00` with word parameter `$0123`, and number `01` with word parameter `$0000`. It would also insert one extended object: number `98` with word parameter `$0001`.
 
+The list file also has two additional commands: `@osc` and `@mw0t`. These respectively allow you to add new entries directly to the .osc and .mw0/t files respectively. These lines are added as is to both files, *except* for lines containing the `STANDARD:` and `EXTENDED:` labels, used to write the adequate info to the Lunar Magic list. You can put them in either command, but really they're only useful in the `@mw0t` mode.  
+Here is an example of both these commands in action:
+```
+@osc
+0	67	0	Object 67, scary...
+
+@mw0t
+EXTENDED:
+67	Ominous object 67.
+```
+
 ## Running ObjecTool
 
 Running ObjecTool is as simple as opening `objectool.exe`, then dragging your ROM file and list as prompted!  

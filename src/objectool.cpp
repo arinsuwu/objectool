@@ -372,6 +372,8 @@ print hex(standard_word_params, 6) \n\
     int standard_obj_count = 0;
     int extended_obj_count = 0;
     bool inserting_extended = false;
+    bool display_mode = false;
+    bool writing_tooltip = false;
 
     Tooltip tooltip;
     if(generate_tooltip)
@@ -381,271 +383,323 @@ print hex(standard_word_params, 6) \n\
         tooltip.open_mw0(std::string(rom_name+".mw0").c_str());
     }
 
-    // Object assembly
+    // Object and list assembly
     std::string e;
     std::vector< std::tuple< std::string, int, bool, std::map<std::string, std::string> > > inserted_objects;
     for(std::string dirty_object; std::getline(list, dirty_object);)
     {
-        try
+        std::size_t pos {};
+        std::string object = dirty_object;
+
+        if(display_mode)
         {
-            std::size_t pos {};
-            std::string object = dirty_object;
-
-            if(object.find_first_not_of("\t ")==std::string::npos) continue;
-
-            object = object.substr(object.find_first_not_of("\t "));
-
-            if(object.starts_with(";")) continue;
-
-            object = object.substr(0, 1+object.find_last_not_of("\t "));
-
-            if(object.substr(object.find_first_not_of("\t "), std::string::npos-object.find_last_not_of("\t ")) == "EXTENDED:")
+            std::string clean_obj;
+            try
             {
-                inserting_extended = true;
+                clean_obj = object.substr(object.find_first_not_of("\t "));
+                clean_obj = clean_obj.substr(0, 1+clean_obj.find_last_not_of("\t "));
+                clean_obj = clean_obj.substr(clean_obj.find_first_not_of("\t "), std::string::npos-object.find_last_not_of("\t "));
+            }
+            catch(...)
+            {
+                clean_obj = "";
+            }
+
+            if(clean_obj == "@osc" || clean_obj == "@mw0t")
+            {
+                writing_tooltip = clean_obj == "@osc";
                 continue;
             }
-            if(object.substr(object.find_first_not_of("\t "), std::string::npos-object.find_last_not_of("\t ")) == "STANDARD:")
+            if(clean_obj == "EXTENDED:" || clean_obj == "STANDARD:")
             {
-                inserting_extended = false;
+                inserting_extended = clean_obj == "EXTENDED:";
                 continue;
             }
 
-            int object_number = std::stoi(object, &pos, 16);
-            if(object_number<0x00 || object_number>0xFF) throw std::out_of_range("");
-
-            object = object.substr(pos);
-            int word_parameter;
-            try { word_parameter = std::stoi(object, &pos, 16); }
-            catch(...) { pos = 0; word_parameter = 0x0000; }
-
-            std::string object_filename(object.substr(object.find_first_not_of("\t ", pos)));
-            cleanup_str(&object_filename);
-            if(!object_filename.ends_with(".asm") && !object_filename.ends_with(".asm\""))
-                exit(error("Unknown extension for object {}", object_filename));
-
-            bool already_inserted = false;
-            for(std::tuple< std::string, int, bool, std::map<std::string, std::string> > inserted_object : inserted_objects)
+            if(writing_tooltip)
             {
-                std::string inserted_object_filename = std::get<0>(inserted_object);
-                int inserted_object_number = std::get<1>(inserted_object);
-                bool inserted_extended_object = std::get<2>(inserted_object);
-                std::map<std::string, std::string> inserted_object_defines = std::get<3>(inserted_object);
-
-                if(object_filename == inserted_object_filename)
-                {
-                    if(inserting_extended)
-                    {
-                        ++extended_obj_count;
-                        if(inserted_extended_object)
-                        {
-                            extended_obj_ptrs[2+(object_number-EXTENDED_OBJECT_START)*3] = extended_obj_ptrs[2+(inserted_object_number-EXTENDED_OBJECT_START)*3];
-                            extended_obj_ptrs[1+(object_number-EXTENDED_OBJECT_START)*3] = extended_obj_ptrs[1+(inserted_object_number-EXTENDED_OBJECT_START)*3];
-                            extended_obj_ptrs[0+(object_number-EXTENDED_OBJECT_START)*3] = extended_obj_ptrs[0+(inserted_object_number-EXTENDED_OBJECT_START)*3];
-                        }
-                        else
-                        {
-                            extended_obj_ptrs[2+(object_number-EXTENDED_OBJECT_START)*3] = standard_obj_ptrs[2+inserted_object_number*3];
-                            extended_obj_ptrs[1+(object_number-EXTENDED_OBJECT_START)*3] = standard_obj_ptrs[1+inserted_object_number*3];
-                            extended_obj_ptrs[0+(object_number-EXTENDED_OBJECT_START)*3] = standard_obj_ptrs[0+inserted_object_number*3];
-                        }
-
-                        extended_word_params[1+(object_number-EXTENDED_OBJECT_START)*2] = (word_parameter>>8)&0xFF;
-                        extended_word_params[0+(object_number-EXTENDED_OBJECT_START)*2] = word_parameter&0xFF;
-                    }
-                    else
-                    {
-                        ++standard_obj_count;
-                        if(inserted_extended_object)
-                        {
-                            standard_obj_ptrs[2+object_number*3] = extended_obj_ptrs[2+(inserted_object_number-EXTENDED_OBJECT_START)*3];
-                            standard_obj_ptrs[1+object_number*3] = extended_obj_ptrs[1+(inserted_object_number-EXTENDED_OBJECT_START)*3];
-                            standard_obj_ptrs[0+object_number*3] = extended_obj_ptrs[0+(inserted_object_number-EXTENDED_OBJECT_START)*3];
-                        }
-                        else
-                        {
-                            standard_obj_ptrs[2+object_number*3] = standard_obj_ptrs[2+inserted_object_number*3];
-                            standard_obj_ptrs[1+object_number*3] = standard_obj_ptrs[1+inserted_object_number*3];
-                            standard_obj_ptrs[0+object_number*3] = standard_obj_ptrs[0+inserted_object_number*3];
-                        }
-
-                        standard_word_params[1+object_number*2] = (word_parameter>>8)&0xFF;
-                        standard_word_params[0+object_number*2] = word_parameter&0xFF;
-                    }
-
-                    std::string inserted_object_tooltip;
-                    std::string inserted_object_list;
-
-                    if(!tooltip.write_both_tooltips_from_defines(inserted_object_defines, object_number, inserting_extended, word_parameter, &inserted_object_tooltip, &inserted_object_list, &e))
-                        exit(error("{}", e));
-
-                    if(verbose)
-                    {
-                        fmt::println
-                        (
-                            "{} object {:0>2X} - {}\n    asm file already inserted (was {} object {:0>2X})",
-                            inserting_extended ? "Extended" : "Standard",
-                            object_number,
-                            object_filename,
-                            inserted_extended_object ? "extended" : "standard",
-                            inserted_object_number
-                        );
-                        fmt::println("    Tooltip text: {}", inserted_object_tooltip);
-                        fmt::println("    List info:    {}", inserted_object_list);
-                        fmt::println("-----------------------------------------------------------");
-                    }
-
-                    already_inserted = true;
-                    break;
-                }
-            }
-            if(already_inserted) continue;
-
-            std::string object_labelname(object_filename.substr(0, object_filename.find_first_of("."))+"_"+std::to_string(object_number));
-            cleanup_str(&object_labelname);
-
-            auto clean_it = std::remove(object_labelname.begin(), object_labelname.end(), '\\');
-            object_labelname.erase(clean_it, object_labelname.end());
-            clean_it = std::remove(object_labelname.begin(), object_labelname.end(), '/');
-            object_labelname.erase(clean_it, object_labelname.end());
-            clean_it = std::remove(object_labelname.begin(), object_labelname.end(), ' ');
-            object_labelname.erase(clean_it, object_labelname.end());
-
-            if(!inserting_extended)
-            {
-                // Standard objects
-                if( retry_mmp && ( (object_number<0x42) || (object_number==0x50) || (object_number==0x51) ) ) throw std::out_of_range("");
-                if( (standard_obj_ptrs[2+object_number*3]<<16 | standard_obj_ptrs[1+object_number*3]<<8 | standard_obj_ptrs[object_number*3]) != 0x0DA414 ) throw std::invalid_argument("");
+                if(!tooltip.write_display_tooltip(true, -1, object, false, &e))
+                    exit(error("An error occurred while writing to the osc file: {}", e));
             }
             else
             {
-                // Extended objects
-                if(object_number<EXTENDED_OBJECT_START) throw std::out_of_range("");
-                if
-                (
+                int object_number;
+                try
+                {
+                    object_number = std::stoi(object, &pos, 16);
+                    if(object_number<0x00 || object_number>0xFF) throw std::out_of_range("");
+                }
+                catch(...)
+                {
+                    object_number = 0x00;
+                }
+                if(!tooltip.write_list_tooltip(true, object_number, object, inserting_extended, &e))
+                    exit(error("An error occurred while writing to the mw0t file: {}", e));
+            }
+        }
+        else
+        {
+            try
+            {
+                if(object.find_first_not_of("\t ")==std::string::npos) continue;
+
+                object = object.substr(object.find_first_not_of("\t "));
+
+                if(object.starts_with(";")) continue;
+
+                object = object.substr(0, 1+object.find_last_not_of("\t "));
+
+                std::string clean_obj = object.substr(object.find_first_not_of("\t "), std::string::npos-object.find_last_not_of("\t "));
+                if(clean_obj == "@osc" || clean_obj == "@mw0t")
+                {
+                    display_mode = true;
+                    writing_tooltip = clean_obj == "@osc";
+                    inserting_extended = false;
+                    continue;
+                }
+                if(clean_obj == "EXTENDED:" || clean_obj == "STANDARD:")
+                {
+                    inserting_extended = clean_obj == "EXTENDED:";
+                    continue;
+                }
+
+                int object_number = std::stoi(object, &pos, 16);
+                if(object_number<0x00 || object_number>0xFF) throw std::out_of_range("");
+
+                object = object.substr(pos);
+                int word_parameter;
+                try { word_parameter = std::stoi(object, &pos, 16); }
+                catch(...) { pos = 0; word_parameter = 0x0000; }
+
+                std::string object_filename(object.substr(object.find_first_not_of("\t ", pos)));
+                cleanup_str(&object_filename);
+                if(!object_filename.ends_with(".asm") && !object_filename.ends_with(".asm\""))
+                    exit(error("Unknown extension for object {}", object_filename));
+
+                bool already_inserted = false;
+                for(std::tuple< std::string, int, bool, std::map<std::string, std::string> > inserted_object : inserted_objects)
+                {
+                    std::string inserted_object_filename = std::get<0>(inserted_object);
+                    int inserted_object_number = std::get<1>(inserted_object);
+                    bool inserted_extended_object = std::get<2>(inserted_object);
+                    std::map<std::string, std::string> inserted_object_defines = std::get<3>(inserted_object);
+
+                    if(object_filename == inserted_object_filename)
+                    {
+                        if(inserting_extended)
+                        {
+                            ++extended_obj_count;
+                            if(inserted_extended_object)
+                            {
+                                extended_obj_ptrs[2+(object_number-EXTENDED_OBJECT_START)*3] = extended_obj_ptrs[2+(inserted_object_number-EXTENDED_OBJECT_START)*3];
+                                extended_obj_ptrs[1+(object_number-EXTENDED_OBJECT_START)*3] = extended_obj_ptrs[1+(inserted_object_number-EXTENDED_OBJECT_START)*3];
+                                extended_obj_ptrs[0+(object_number-EXTENDED_OBJECT_START)*3] = extended_obj_ptrs[0+(inserted_object_number-EXTENDED_OBJECT_START)*3];
+                            }
+                            else
+                            {
+                                extended_obj_ptrs[2+(object_number-EXTENDED_OBJECT_START)*3] = standard_obj_ptrs[2+inserted_object_number*3];
+                                extended_obj_ptrs[1+(object_number-EXTENDED_OBJECT_START)*3] = standard_obj_ptrs[1+inserted_object_number*3];
+                                extended_obj_ptrs[0+(object_number-EXTENDED_OBJECT_START)*3] = standard_obj_ptrs[0+inserted_object_number*3];
+                            }
+
+                            extended_word_params[1+(object_number-EXTENDED_OBJECT_START)*2] = (word_parameter>>8)&0xFF;
+                            extended_word_params[0+(object_number-EXTENDED_OBJECT_START)*2] = word_parameter&0xFF;
+                        }
+                        else
+                        {
+                            ++standard_obj_count;
+                            if(inserted_extended_object)
+                            {
+                                standard_obj_ptrs[2+object_number*3] = extended_obj_ptrs[2+(inserted_object_number-EXTENDED_OBJECT_START)*3];
+                                standard_obj_ptrs[1+object_number*3] = extended_obj_ptrs[1+(inserted_object_number-EXTENDED_OBJECT_START)*3];
+                                standard_obj_ptrs[0+object_number*3] = extended_obj_ptrs[0+(inserted_object_number-EXTENDED_OBJECT_START)*3];
+                            }
+                            else
+                            {
+                                standard_obj_ptrs[2+object_number*3] = standard_obj_ptrs[2+inserted_object_number*3];
+                                standard_obj_ptrs[1+object_number*3] = standard_obj_ptrs[1+inserted_object_number*3];
+                                standard_obj_ptrs[0+object_number*3] = standard_obj_ptrs[0+inserted_object_number*3];
+                            }
+
+                            standard_word_params[1+object_number*2] = (word_parameter>>8)&0xFF;
+                            standard_word_params[0+object_number*2] = word_parameter&0xFF;
+                        }
+
+                        std::string inserted_object_tooltip;
+                        std::string inserted_object_list;
+
+                        if(!tooltip.write_both_tooltips_from_defines(inserted_object_defines, object_number, inserting_extended, word_parameter, &inserted_object_tooltip, &inserted_object_list, &e))
+                            exit(error("{}", e));
+
+                        if(verbose)
+                        {
+                            fmt::println
+                            (
+                                "{} object {:0>2X} - {}\n    asm file already inserted (was {} object {:0>2X})",
+                                inserting_extended ? "Extended" : "Standard",
+                                object_number,
+                                object_filename,
+                                inserted_extended_object ? "extended" : "standard",
+                                inserted_object_number
+                            );
+                            fmt::println("    Tooltip text: {}", inserted_object_tooltip);
+                            fmt::println("    List info:    {}", inserted_object_list);
+                            fmt::println("-----------------------------------------------------------");
+                        }
+
+                        already_inserted = true;
+                        break;
+                    }
+                }
+                if(already_inserted) continue;
+
+                std::string object_labelname(object_filename.substr(0, object_filename.find_first_of("."))+"_"+std::to_string(object_number));
+                cleanup_str(&object_labelname);
+
+                auto clean_it = std::remove(object_labelname.begin(), object_labelname.end(), '\\');
+                object_labelname.erase(clean_it, object_labelname.end());
+                clean_it = std::remove(object_labelname.begin(), object_labelname.end(), '/');
+                object_labelname.erase(clean_it, object_labelname.end());
+                clean_it = std::remove(object_labelname.begin(), object_labelname.end(), ' ');
+                object_labelname.erase(clean_it, object_labelname.end());
+
+                if(!inserting_extended)
+                {
+                    // Standard objects
+                    if( retry_mmp && ( (object_number<0x42) || (object_number==0x50) || (object_number==0x51) ) ) throw std::out_of_range("");
+                    if( (standard_obj_ptrs[2+object_number*3]<<16 | standard_obj_ptrs[1+object_number*3]<<8 | standard_obj_ptrs[object_number*3]) != 0x0DA414 ) throw std::invalid_argument("");
+                }
+                else
+                {
+                    // Extended objects
+                    if(object_number<EXTENDED_OBJECT_START) throw std::out_of_range("");
+                    if
                     (
-                        extended_obj_ptrs[2+(object_number-EXTENDED_OBJECT_START)*3]<<16 | \
-                        extended_obj_ptrs[1+(object_number-EXTENDED_OBJECT_START)*3]<<8 | \
-                        extended_obj_ptrs[(object_number-EXTENDED_OBJECT_START)*3]
-                    ) != 0x0DA414
-                ) throw std::invalid_argument("");
-            }
+                        (
+                            extended_obj_ptrs[2+(object_number-EXTENDED_OBJECT_START)*3]<<16 | \
+                            extended_obj_ptrs[1+(object_number-EXTENDED_OBJECT_START)*3]<<8 | \
+                            extended_obj_ptrs[(object_number-EXTENDED_OBJECT_START)*3]
+                        ) != 0x0DA414
+                    ) throw std::invalid_argument("");
+                }
 
-            std::ifstream curr_object(tool_folder+objects_path+"/"+object_filename);
-            if(!curr_object)
-                exit(error("Could not open object with number {:0>2X} and filename {}. Make sure it exists and is in the {} directory.", object_number, object_filename, objects_path));
+                std::ifstream curr_object(tool_folder+objects_path+"/"+object_filename);
+                if(!curr_object)
+                    exit(error("Could not open object with number {:0>2X} and filename {}. Make sure it exists and is in the {} directory.", object_number, object_filename, objects_path));
 
-            std::string object_patch
-            (
-                std::format
+                std::string object_patch
                 (
-"\
-incsrc defines.asm\n\
-incsrc ssr.asm\n\
-incsrc macro.asm\n\
-standard_word_params    = ${5}|!bank\n\
-extended_word_params    = ${5}|!bank+512\n\
-!objectool_version     #= {6}\n\
-!objectool_subversion  #= {7}\n\
-!word_param            #= {8}\n\
-\n\
-namespace {1}\n\
-    freecode cleaned\n\
-    incsrc {4}\n\
-    !tooltip   ?= \"Object with filename {2}\"\n\
-    !list      ?= \"{2}\"\n\
-    print \"{0} object {3:0>2X} - {2}\"\n\
-    print \"    Inserted at: $\", hex({1}_load)\n\n\
-    incsrc ssr_insert.asm\n\
-namespace off\n\
-",
-                    inserting_extended ? "Extended" : "Standard",
-                    object_labelname,
-                    object_filename,
-                    object_number,
-                    ("\""+tool_folder+objects_path+"/"+object_filename+"\""),
-                    word_param_addr,
-                    VERSION,
-                    SUBVER,
-                    word_parameter
-                )
-            );
+                    std::format
+                    (
+    "\
+    incsrc defines.asm\n\
+    incsrc ssr.asm\n\
+    incsrc macro.asm\n\
+    standard_word_params    = ${5}|!bank\n\
+    extended_word_params    = ${5}|!bank+512\n\
+    !objectool_version     #= {6}\n\
+    !objectool_subversion  #= {7}\n\
+    !word_param            #= {8}\n\
+    \n\
+    namespace {1}\n\
+        freecode cleaned\n\
+        incsrc {4}\n\
+        !tooltip   ?= \"Object with filename {2}\"\n\
+        !list      ?= \"{2}\"\n\
+        print \"{0} object {3:0>2X} - {2}\"\n\
+        print \"    Inserted at: $\", hex({1}_load)\n\n\
+        incsrc ssr_insert.asm\n\
+    namespace off\n\
+    ",
+                        inserting_extended ? "Extended" : "Standard",
+                        object_labelname,
+                        object_filename,
+                        object_number,
+                        ("\""+tool_folder+objects_path+"/"+object_filename+"\""),
+                        word_param_addr,
+                        VERSION,
+                        SUBVER,
+                        word_parameter
+                    )
+                );
 
-            std::string object_display_tooltip;
-            std::string object_list_tooltip;
-            if(!rom.inline_patch(tool_folder, object_patch.c_str()))
-                exit(error("Could not insert {} object {}. Details: {}\n", inserting_extended ? "extended" : "standard", object_filename, asar_geterrors(&asar_errcount)->fullerrdata));
+                std::string object_display_tooltip;
+                std::string object_list_tooltip;
+                if(!rom.inline_patch(tool_folder, object_patch.c_str()))
+                    exit(error("Could not insert {} object {}. Details: {}\n", inserting_extended ? "extended" : "standard", object_filename, asar_geterrors(&asar_errcount)->fullerrdata));
 
-            auto object_definedata = asar_getalldefines(&asar_errcount);
-            int total_defines = asar_errcount;
-            std::map<std::string, std::string> object_defines;
-            for(int i=0;i<total_defines;++i)
-                object_defines[object_definedata[i].name] = object_definedata[i].contents;
+                auto object_definedata = asar_getalldefines(&asar_errcount);
+                int total_defines = asar_errcount;
+                std::map<std::string, std::string> object_defines;
+                for(int i=0;i<total_defines;++i)
+                    object_defines[object_definedata[i].name] = object_definedata[i].contents;
 
-            auto object_print = asar_getprints(&asar_errcount);
-            for(int i=0;i<asar_errcount;++i)
-            {
-                std::string object_addr(object_print[i]);
+                auto object_print = asar_getprints(&asar_errcount);
+                for(int i=0;i<asar_errcount;++i)
+                {
+                    std::string object_addr(object_print[i]);
+                    if(verbose)
+                        fmt::println("{}", object_addr);
+                    if( (object_addr.substr(0,6) != "Shared") && (object_addr.find('$') != std::string::npos) )
+                    {
+                        object_addr = std::string(object_addr.begin()+object_addr.find_first_of("$")+1, object_addr.end());
+                        if(inserting_extended)
+                        {
+                            extended_obj_ptrs[2+(object_number-EXTENDED_OBJECT_START)*3] = std::stoi(std::string(object_addr.begin(),object_addr.begin()+2), &pos, 16);
+                            extended_obj_ptrs[1+(object_number-EXTENDED_OBJECT_START)*3] = std::stoi(std::string(object_addr.begin()+2,object_addr.begin()+4), &pos, 16);
+                            extended_obj_ptrs[0+(object_number-EXTENDED_OBJECT_START)*3] = std::stoi(std::string(object_addr.begin()+4,object_addr.begin()+6), &pos, 16);
+
+                            extended_word_params[1+(object_number-EXTENDED_OBJECT_START)*2] = (word_parameter>>8)&0xFF;
+                            extended_word_params[0+(object_number-EXTENDED_OBJECT_START)*2] = word_parameter&0xFF;
+                        }
+                        else
+                        {
+                            standard_obj_ptrs[2+object_number*3] = std::stoi(std::string(object_addr.begin(),object_addr.begin()+2), &pos, 16);
+                            standard_obj_ptrs[1+object_number*3] = std::stoi(std::string(object_addr.begin()+2,object_addr.begin()+4), &pos, 16);
+                            standard_obj_ptrs[0+object_number*3] = std::stoi(std::string(object_addr.begin()+4,object_addr.begin()+6), &pos, 16);
+
+                            standard_word_params[1+object_number*2] = (word_parameter>>8)&0xFF;
+                            standard_word_params[0+object_number*2] = word_parameter&0xFF;
+                        }
+                    }
+                }
+
+                if(!tooltip.write_both_tooltips_from_defines(object_defines, object_number, inserting_extended, word_parameter, &object_display_tooltip, &object_list_tooltip, &e))
+                    exit(error("{}", e));
+
                 if(verbose)
-                    fmt::println("{}", object_addr);
-                if( (object_addr.substr(0,6) != "Shared") && (object_addr.find('$') != std::string::npos) )
                 {
-                    object_addr = std::string(object_addr.begin()+object_addr.find_first_of("$")+1, object_addr.end());
-                    if(inserting_extended)
-                    {
-                        extended_obj_ptrs[2+(object_number-EXTENDED_OBJECT_START)*3] = std::stoi(std::string(object_addr.begin(),object_addr.begin()+2), &pos, 16);
-                        extended_obj_ptrs[1+(object_number-EXTENDED_OBJECT_START)*3] = std::stoi(std::string(object_addr.begin()+2,object_addr.begin()+4), &pos, 16);
-                        extended_obj_ptrs[0+(object_number-EXTENDED_OBJECT_START)*3] = std::stoi(std::string(object_addr.begin()+4,object_addr.begin()+6), &pos, 16);
-
-                        extended_word_params[1+(object_number-EXTENDED_OBJECT_START)*2] = (word_parameter>>8)&0xFF;
-                        extended_word_params[0+(object_number-EXTENDED_OBJECT_START)*2] = word_parameter&0xFF;
-                    }
-                    else
-                    {
-                        standard_obj_ptrs[2+object_number*3] = std::stoi(std::string(object_addr.begin(),object_addr.begin()+2), &pos, 16);
-                        standard_obj_ptrs[1+object_number*3] = std::stoi(std::string(object_addr.begin()+2,object_addr.begin()+4), &pos, 16);
-                        standard_obj_ptrs[0+object_number*3] = std::stoi(std::string(object_addr.begin()+4,object_addr.begin()+6), &pos, 16);
-
-                        standard_word_params[1+object_number*2] = (word_parameter>>8)&0xFF;
-                        standard_word_params[0+object_number*2] = word_parameter&0xFF;
-                    }
+                    fmt::println("    Tooltip text: {}", object_display_tooltip);
+                    fmt::println("    List info:    {}", object_list_tooltip);
                 }
+
+                if(verbose)
+                    fmt::println("-----------------------------------------------------------");
+
+                inserted_objects.emplace_back
+                (
+                    std::tuple<std::string, int, bool, std::map<std::string, std::string>>
+                    {
+                        object_filename,
+                        object_number,
+                        inserting_extended,
+                        object_defines
+                    }
+                );
+                if(inserting_extended)
+                    ++extended_obj_count;
+                else
+                    ++standard_obj_count;
             }
-
-            if(!tooltip.write_both_tooltips_from_defines(object_defines, object_number, inserting_extended, word_parameter, &object_display_tooltip, &object_list_tooltip, &e))
-                exit(error("{}", e));
-
-            if(verbose)
+            catch(std::invalid_argument const & err)
             {
-                fmt::println("    Tooltip text: {}", object_display_tooltip);
-                fmt::println("    List info:    {}", object_list_tooltip);
+                exit(error("Error parsing the list file: duplicate object number\n  {}\n", dirty_object));
             }
-
-            if(verbose)
-                fmt::println("-----------------------------------------------------------");
-
-            inserted_objects.emplace_back
-            (
-                std::tuple<std::string, int, bool, std::map<std::string, std::string>>
-                {
-                    object_filename,
-                    object_number,
-                    inserting_extended,
-                    object_defines
-                }
-            );
-            if(inserting_extended)
-                ++extended_obj_count;
-            else
-                ++standard_obj_count;
-        }
-        catch(std::invalid_argument const & err)
-        {
-            exit(error("Error parsing the list file: duplicate object number\n  {}\n", dirty_object));
-        }
-        catch(std::out_of_range const & err)
-        {
-            const char * retry = retry_mmp&(!inserting_extended) ? "If using Retry's Multiple Midway Points, standard objects 00-42, 50 and 51 are reserved." : "";
-            exit(error("Error parsing the list file: incorrect object number\n  {}\n{}", dirty_object, retry));
+            catch(std::out_of_range const & err)
+            {
+                const char * retry = retry_mmp&(!inserting_extended) ? "If using Retry's Multiple Midway Points, standard objects 00-42, 50 and 51 are reserved." : "";
+                exit(error("Error parsing the list file: incorrect object number\n  {}\n{}", dirty_object, retry));
+            }
         }
     }
 
