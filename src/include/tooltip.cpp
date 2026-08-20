@@ -48,7 +48,7 @@ bool destroy_tooltip(std::string filename)
 void Tooltip::open_mw0(const char* filename, const char* append)
 {
     std::ofstream(filename, ios::app).write("", 0);
-    if(append != "")
+    if(std::strcmp(append, "") != 0)
     {
         std::ifstream append_mw0(append, ios::binary);
         if(!append_mw0)
@@ -76,7 +76,7 @@ void Tooltip::open_mw0t(const char* filename, const char* append)
     std::ofstream(filename, ios::app).write("", 0);
 
     mw0t = std::ofstream(filename, ios::app);
-    if(append != "")
+    if(std::strcmp(append, "") != 0)
     {
         std::ifstream append_mw0t(append);
         if(!append_mw0t)
@@ -102,7 +102,7 @@ void Tooltip::open_osc(const char* filename, const char* append)
     std::ofstream(filename, ios::app).write("", 0);
 
     osc = std::ofstream(filename, ios::app);
-    if(append != "")
+    if(std::strcmp(append, "") != 0)
     {
         std::ifstream append_osc(append);
         if(!append_osc)
